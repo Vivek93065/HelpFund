@@ -37,7 +37,7 @@ const config = {
 
   // Google Gemini API Configuration
   geminiApiKey: process.env.GEMINI_API_KEY || '',
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
 
   // Cloudflare Workers AI Configuration
   cloudflare: {
