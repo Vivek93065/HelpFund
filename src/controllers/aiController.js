@@ -129,18 +129,102 @@ class AiController {
         });
       }
 
-      const image = await ImageGenerationService.generateCampaignImage({
+      const imageResult = await ImageGenerationService.generateCampaignImage({
         title: title.trim(),
         category: category.trim(),
         description: description.trim()
       });
 
+      const image = typeof imageResult === 'object' ? imageResult.image : imageResult;
+      const mimeType = (typeof imageResult === 'object' && imageResult.mimeType) ? imageResult.mimeType : 'image/jpeg';
+      const source = (typeof imageResult === 'object' && imageResult.source) ? imageResult.source : 'ai';
+
       return res.status(200).json({
         success: true,
         data: {
           image,
-          mimeType: 'image/jpeg'
+          mimeType,
+          source
         }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Predicts real-world impact for a donation amount using Gemini AI.
+   * POST /api/ai/predict-impact
+   */
+  static async predictImpact(req, res, next) {
+    try {
+      const { campaign_id, amount, campaign_title, category, target_amount } = req.body;
+      let title = campaign_title;
+      let cat = category;
+      let target = target_amount;
+
+      if (campaign_id) {
+        const c = CampaignModel.findById(campaign_id);
+        if (c) {
+          title = c.title;
+          cat = c.category;
+          target = c.target_amount;
+        }
+      }
+
+      const impact = await GeminiService.predictDonationImpact({
+        campaignTitle: title || 'HelpFund Campaign',
+        category: cat || 'Community',
+        amount: parseFloat(amount) || 25,
+        targetAmount: parseFloat(target) || 5000
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: impact
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Drafts a progress update for campaign backers.
+   * POST /api/ai/draft-update
+   */
+  static async draftUpdate(req, res, next) {
+    try {
+      const { campaign_id, notes } = req.body;
+      if (!notes || typeof notes !== 'string' || notes.trim().length < 5) {
+        return res.status(400).json({
+          success: false,
+          error: 'Please provide at least 5 characters of progress notes.'
+        });
+      }
+
+      let title = 'Our Campaign Progress';
+      let raised = 0;
+      let target = 5000;
+
+      if (campaign_id) {
+        const c = CampaignModel.findById(campaign_id);
+        if (c) {
+          title = c.title;
+          raised = c.raised_amount;
+          target = c.target_amount;
+        }
+      }
+
+      const draft = await GeminiService.draftCampaignUpdate({
+        campaignTitle: title,
+        rawNotes: notes.trim(),
+        raisedAmount: raised,
+        targetAmount: target
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: draft
       });
     } catch (error) {
       next(error);

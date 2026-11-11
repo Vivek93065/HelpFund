@@ -323,6 +323,73 @@ class CampaignController {
       next(error);
     }
   }
+
+  /**
+   * Retrieves progress updates for a campaign.
+   * GET /api/campaigns/:id/updates
+   */
+  static async getCampaignUpdates(req, res, next) {
+    try {
+      const { id } = req.params;
+      const updates = CampaignModel.getUpdates(id);
+      return res.status(200).json({
+        success: true,
+        data: updates
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Adds a new milestone progress update to a campaign.
+   * POST /api/campaigns/:id/updates
+   */
+  static async addCampaignUpdate(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { title, update_text } = req.body;
+
+      const campaign = CampaignModel.findById(id);
+      if (!campaign) {
+        return res.status(404).json({
+          success: false,
+          error: 'Campaign not found.'
+        });
+      }
+
+      if (campaign.user_id !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: 'You are not authorized to post updates for this campaign.'
+        });
+      }
+
+      if (!title || typeof title !== 'string' || title.trim().length < 3) {
+        return res.status(400).json({
+          success: false,
+          error: 'Update title of at least 3 characters is required.'
+        });
+      }
+
+      if (!update_text || typeof update_text !== 'string' || update_text.trim().length < 10) {
+        return res.status(400).json({
+          success: false,
+          error: 'Update content of at least 10 characters is required.'
+        });
+      }
+
+      const updateRecord = CampaignModel.addUpdate(id, title.trim(), update_text.trim());
+
+      return res.status(201).json({
+        success: true,
+        message: 'Campaign update published successfully.',
+        data: updateRecord
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = CampaignController;

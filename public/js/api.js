@@ -71,6 +71,13 @@ class ApiClient {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // If token signature is invalid, expired, or user deleted on restart, auto-clear stale token
+          const errStr = String(data.error || '').toLowerCase();
+          if (errStr.includes('token') || errStr.includes('session') || errStr.includes('expired') || errStr.includes('not found') || errStr.includes('no longer exists')) {
+            this.clearAuth();
+          }
+        }
         const errorMessage = data.error || (data.errors ? data.errors.join('. ') : 'An unexpected error occurred.');
         const error = new Error(errorMessage);
         error.status = response.status;

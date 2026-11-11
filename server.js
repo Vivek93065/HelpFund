@@ -16,6 +16,16 @@ const { initDatabase, resolvedDbPath } = require('./src/config/db');
 initDatabase();
 console.log('Database initialized successfully.');
 
+// Auto-seed showcase demonstration campaigns if database is freshly initialized (e.g. on Render)
+if (config.nodeEnv !== 'test') {
+  try {
+    const seed = require('./scripts/seed');
+    seed();
+  } catch (seedErr) {
+    console.warn('Auto-seed check warning:', seedErr.message);
+  }
+}
+
 const server = app.listen(config.port, () => {
   console.log('====================================================');
   console.log('           HelpFund Server Started Successfully     ');

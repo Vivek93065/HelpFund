@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Dashboard | HelpFund</title>
+  <title>My Dashboard - HelpFund</title>
 
   <link rel="stylesheet" href="/css/variables.css">
   <link rel="stylesheet" href="/css/global.css">
@@ -12,7 +11,7 @@
 
   <style>
     .dashboard-main {
-      padding: 2.5rem 0;
+      padding: 3rem 0 5rem;
     }
 
     .dashboard-header {
@@ -20,281 +19,521 @@
     }
 
     .dashboard-header h1 {
-      font-size: 2rem;
+      font-size: 2.2rem;
+      font-weight: 800;
       margin-bottom: 0.35rem;
+      color: var(--color-text-main);
     }
 
     .dashboard-header p {
       color: var(--color-text-muted);
+      font-size: 1.05rem;
     }
 
-    .dashboard-content {
+    .dashboard-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
-      padding: 2rem;
-      min-height: 250px;
+      padding: 1.5rem;
       box-shadow: var(--shadow-sm);
     }
 
-    .loading-message {
-      text-align: center;
+    .stat-card h3 {
       color: var(--color-text-muted);
-      padding: 3rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    @media (max-width: 600px) {
-      .dashboard-content {
-        padding: 1.25rem;
-      }
-
-      .dashboard-header h1 {
-        font-size: 1.6rem;
-      }
+    .stat-card p {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--color-primary-dark);
+      margin-top: 0.25rem;
     }
 
-.dashboard-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-}
+    /* Tabs */
+    .dashboard-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 2rem;
+    }
 
-.stat-card, .campaign-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-}
+    .dash-tab-btn {
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all var(--transition-fast);
+    }
 
-.stat-card h3 {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
+    .dash-tab-btn.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
 
-.stat-card p {
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-}
+    .campaign-list-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
 
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
+    .dash-campaign-item {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-.campaign-card h3 {
-  margin-bottom: 0.35rem;
-}
+    .dash-campaign-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
 
-.campaign-card p {
-  color: var(--color-text-muted);
-  margin: 0.4rem 0;
-}
+    .dash-campaign-title {
+      font-size: 1.25rem;
+      font-weight: 750;
+      color: var(--color-text-main);
+      text-decoration: none;
+    }
 
-.progress-track {
-  height: 9px;
-  background: var(--color-border);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin: 0.6rem 0;
-}
+    .dash-campaign-title:hover {
+      color: var(--color-primary);
+    }
 
-.progress-fill {
-  height: 100%;
-  background: var(--color-primary);
-  border-radius: var(--radius-full);
-}
+    .progress-track {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
 
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.7rem;
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-  border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  text-transform: capitalize;
-}
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), #059669);
+      border-radius: var(--radius-full);
+    }
 
+    .donation-item-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* Modal for Campaign Update */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      max-width: 620px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--color-border);
+    }
   </style>
 </head>
-
 <body>
 
+  <!-- Navigation Bar -->
   <header class="navbar">
     <div class="container navbar-container">
       <a href="/" class="brand-logo">
         <span class="brand-icon">H</span>
-        Help<span class="brand-highlight">Fund</span>
+        <span>Help<span class="brand-highlight">Fund</span></span>
       </a>
 
-      <nav class="nav-links">
-        <a href="/" class="nav-link">Home</a>
-        <a href="/explore.html" class="nav-link">Explore Causes</a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/explore.html" class="nav-link">Explore Causes</a></li>
+          <li><a href="/dashboard.html" class="nav-link active">Dashboard</a></li>
+        </ul>
       </nav>
 
-      <div class="nav-actions" id="nav-actions"></div>
+      <div class="nav-actions" id="nav-actions">
+        <!-- Managed by auth.js -->
+      </div>
     </div>
   </header>
 
   <main class="dashboard-main">
     <div class="container">
-
+      
       <section class="dashboard-header">
         <h1 id="welcome-heading">My Dashboard</h1>
-        <p id="welcome-description">Manage your activity on HelpFund.</p>
+        <p id="welcome-description">Manage your campaigns, progress updates, and verified donations.</p>
       </section>
 
-      <section class="dashboard-content" id="dashboard-content">
-        <p class="loading-message">Loading your dashboard...</p>
+      <!-- Stats Grid -->
+      <div class="dashboard-stats" id="stats-grid">
+        <div class="stat-card">
+          <h3>Total Campaigns</h3>
+          <p id="stat-total-campaigns">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Raised</h3>
+          <p id="stat-total-raised">$0.00</p>
+        </div>
+        <div class="stat-card">
+          <h3>Causes Backed</h3>
+          <p id="stat-total-donations">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Contributed</h3>
+          <p id="stat-total-contributed">$0.00</p>
+        </div>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="dashboard-tabs">
+        <button class="dash-tab-btn active" id="tab-campaigns-btn" onclick="switchDashTab('campaigns')">
+          📢 My Campaigns
+        </button>
+        <button class="dash-tab-btn" id="tab-donations-btn" onclick="switchDashTab('donations')">
+          ❤️ My Backed Causes
+        </button>
+      </div>
+
+      <!-- Tab 1: Campaigns Content -->
+      <section id="tab-campaigns-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <h2 style="font-size:1.5rem; font-weight:750;">Campaigns You Organize</h2>
+          <a href="/create-campaign.html" class="btn btn-primary btn-sm">+ Start New Campaign</a>
+        </div>
+        <div id="campaigns-container" class="campaign-list-grid">
+          <div style="text-align:center; padding:3rem; color:var(--color-text-muted);">
+            <span class="spinner"></span> Loading your campaigns...
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Donations Content (Initially Hidden) -->
+      <section id="tab-donations-content" style="display:none;">
+        <div style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.5rem; font-weight:750;">Causes You Have Supported</h2>
+          <p style="color:var(--color-text-muted); font-size:0.9rem;">Verified atomic ledger records processed via PayPal Sandbox.</p>
+        </div>
+        <div id="donations-container" style="display:flex; flex-direction:column; gap:1rem;">
+          <div style="text-align:center; padding:3rem; color:var(--color-text-muted);">
+            <span class="spinner"></span> Loading your donations...
+          </div>
+        </div>
       </section>
 
     </div>
   </main>
 
+  <!-- Post Campaign Update Modal with Gemini AI Assistant -->
+  <div class="modal-overlay" id="update-modal">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <h3 style="font-size:1.25rem; font-weight:700;">📢 Post Progress Update</h3>
+        <button type="button" class="modal-close-btn" onclick="closeUpdateModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+
+      <input type="hidden" id="modal-campaign-id">
+
+      <!-- AI Drafter Box -->
+      <div style="background:linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.08)); border:1px solid rgba(59,130,246,0.3); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <strong style="font-size:0.9rem; color:var(--color-text-main);">✨ Draft with Gemini AI</strong>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-ai-draft" onclick="generateAiUpdateDraft()" style="font-size:0.78rem;">
+            Draft Announcement
+          </button>
+        </div>
+        <textarea id="update-raw-notes" class="form-control" rows="2" placeholder="Enter brief bullet points (e.g. Received shipment of 25 kits, starting clinic visits next Tuesday)..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="update-title">Update Headline *</label>
+        <input type="text" id="update-title" class="form-control" placeholder="e.g. Milestone 1 Completed: Supplies Procured!">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="update-content">Update Content *</label>
+        <textarea id="update-content" class="form-control" rows="5" placeholder="Write full details to share with your donors and backers..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-publish-update" onclick="publishUpdate()">Publish Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p>© 2026 HelpFund. Making a difference together.</p>
+      <p>&copy; 2026 HelpFund. Empowering communities with AI &amp; PayPal.</p>
     </div>
   </footer>
 
+  <!-- Scripts -->
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    const user = Auth.getUser();
-    const dashboard = document.getElementById('dashboard-content');
+  <script>
+    let myCampaignsList = [];
+    let myDonationsList = [];
 
-    if (!Auth.isLoggedIn() || !user) {
-      window.location.href = '/login.html';
-      return;
-    }
-
-    document.getElementById('welcome-heading').textContent =
-      `Welcome, ${user.full_name}!`;
-
-    if (user.role === 'creator' || user.role === 'admin') {
-      document.getElementById('welcome-description').textContent =
-        'Track your campaigns and fundraising progress.';
-
-      await loadCreatorDashboard();
-    } else if (user.role === 'donor') {
-      document.getElementById('welcome-description').textContent =
-        'Track your contributions and the causes you support.';
-
-      await loadDonorDashboard();
-    } else {
-      dashboard.textContent = 'Unknown user role.';
-    }
-  });
-
-  async function loadCreatorDashboard() {
-    const dashboard = document.getElementById('dashboard-content');
-
-    try {
-      const response = await ApiClient.get('/campaigns/my');
-      const campaigns = response.data || [];
-
-      const totalRaised = campaigns.reduce(
-        (sum, campaign) => sum + Number(campaign.raised_amount || 0), 0
-      );
-
-      dashboard.innerHTML = `
-        <div class="dashboard-stats">
-          <div class="stat-card">
-            <h3>Total Campaigns</h3>
-            <p>${campaigns.length}</p>
-          </div>
-
-          <div class="stat-card">
-            <h3>Total Amount Raised</h3>
-            <p>$${totalRaised.toFixed(2)}</p>
-          </div>
-        </div>
-
-        <div class="campaign-section">
-          <div class="section-heading">
-            <h2>My Campaigns</h2>
-            <a href="/create-campaign.html" class="btn btn-primary">
-              + Create Campaign
-            </a>
-          </div>
-
-          <div id="campaign-list"></div>
-        </div>
-      `;
-
-      const campaignList = document.getElementById('campaign-list');
-
-      if (campaigns.length === 0) {
-        campaignList.innerHTML = `
-          <p>You haven't created any campaigns yet.</p>
-          <p>Start your first campaign and make a difference!</p>
-        `;
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      if (!Auth.isLoggedIn() || !user) {
+        window.location.href = '/login.html?redirect=/dashboard.html';
         return;
       }
 
-      campaignList.innerHTML = campaigns.map(campaign => {
-        const raised = Number(campaign.raised_amount || 0);
-        const target = Number(campaign.target_amount || 0);
-        const progress = target > 0
-          ? Math.min((raised / target) * 100, 100)
-          : 0;
+      document.getElementById('welcome-heading').textContent = `Welcome back, ${user.full_name}!`;
+      await Promise.all([loadMyCampaigns(), loadMyDonations()]);
+    });
 
-        return `
-          <div class="campaign-card">
-            <h3>${escapeHTML(campaign.title)}</h3>
-            <p>${escapeHTML(campaign.category)}</p>
+    function switchDashTab(tab) {
+      const campBtn = document.getElementById('tab-campaigns-btn');
+      const donBtn = document.getElementById('tab-donations-btn');
+      const campContent = document.getElementById('tab-campaigns-content');
+      const donContent = document.getElementById('tab-donations-content');
 
-            <p>
-              $${raised.toFixed(2)} raised of $${target.toFixed(2)}
-            </p>
-
-            <div class="progress-track">
-              <div class="progress-fill" style="width: ${progress}%"></div>
-            </div>
-
-            <p>${progress.toFixed(1)}% funded</p>
-            <span class="status-badge">
-              ${escapeHTML(campaign.status)}
-            </span>
-          </div>
-        `;
-      }).join('');
-
-    } catch (error) {
-      dashboard.innerHTML = `
-        <p>Unable to load campaigns: ${escapeHTML(error.message)}</p>
-        <button class="btn btn-secondary" onclick="loadCreatorDashboard()">
-          Try Again
-        </button>
-      `;
+      if (tab === 'campaigns') {
+        campBtn.classList.add('active');
+        donBtn.classList.remove('active');
+        campContent.style.display = 'block';
+        donContent.style.display = 'none';
+      } else {
+        donBtn.classList.add('active');
+        campBtn.classList.remove('active');
+        donContent.style.display = 'block';
+        campContent.style.display = 'none';
+      }
     }
-  }
 
-  async function loadDonorDashboard() {
-    // Donor dashboard functionality will be added next.
-    document.getElementById('dashboard-content').innerHTML =
-      '<p>Donor dashboard is coming next.</p>';
-  }
+    async function loadMyCampaigns() {
+      const container = document.getElementById('campaigns-container');
+      try {
+        const res = await ApiClient.get('/campaigns/my');
+        myCampaignsList = res.data || [];
 
-  function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    })[char]);
-  }
-</script>
+        const totalRaised = myCampaignsList.reduce((acc, c) => acc + Number(c.raised_amount || 0), 0);
+        document.getElementById('stat-total-campaigns').textContent = myCampaignsList.length;
+        document.getElementById('stat-total-raised').textContent = `$${totalRaised.toLocaleString()}`;
 
+        if (myCampaignsList.length === 0) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:3rem; background:var(--color-surface); border-radius:var(--radius-lg); border:1px solid var(--color-border);">
+              <div style="font-size:2.5rem; margin-bottom:0.75rem;">🌱</div>
+              <h3>No campaigns created yet</h3>
+              <p style="color:var(--color-text-muted); margin:0.5rem 0 1.25rem;">Start your first fundraising campaign with Gemini AI assistance!</p>
+              <a href="/create-campaign.html" class="btn btn-primary">+ Start a Campaign</a>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = myCampaignsList.map(c => {
+          const raised = Number(c.raised_amount || 0);
+          const target = Number(c.target_amount || 1);
+          const percent = Math.min(100, Math.round((raised / target) * 100));
+
+          return `
+            <div class="dash-campaign-item">
+              <div class="dash-campaign-header">
+                <div>
+                  <a href="/campaign-detail.html?id=${c.id}" class="dash-campaign-title">${escapeHtml(c.title)}</a>
+                  <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.35rem;">
+                    <span class="badge badge-primary">${escapeHtml(c.category)}</span>
+                    <span style="font-size:0.8rem; color:var(--color-text-muted);">Deadline: ${new Date(c.deadline).toLocaleDateString()}</span>
+                    ${c.ai_trust_score ? `<span class="badge badge-secondary" style="font-size:0.75rem;">🛡️ Trust: ${c.ai_trust_score}</span>` : ''}
+                  </div>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="openUpdateModal(${c.id})">
+                    📢 Post Update
+                  </button>
+                  <a href="/campaign-detail.html?id=${c.id}" class="btn btn-outline btn-sm">
+                    View
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: ${percent}%;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                  <div><strong>$${raised.toLocaleString()}</strong> <span style="color:var(--color-text-muted);">raised of $${target.toLocaleString()}</span></div>
+                  <div style="font-weight:700; color:var(--color-primary);">${percent}%</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<p style="color:#ef4444; padding:2rem; text-align:center;">Could not load your campaigns: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    async function loadMyDonations() {
+      const container = document.getElementById('donations-container');
+      try {
+        const res = await ApiClient.get('/donations/my');
+        myDonationsList = res.data || [];
+
+        const totalContributed = myDonationsList.reduce((acc, d) => acc + Number(d.amount || 0), 0);
+        document.getElementById('stat-total-donations').textContent = myDonationsList.length;
+        document.getElementById('stat-total-contributed').textContent = `$${totalContributed.toLocaleString()}`;
+
+        if (myDonationsList.length === 0) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:3rem; background:var(--color-surface); border-radius:var(--radius-lg); border:1px solid var(--color-border);">
+              <div style="font-size:2.5rem; margin-bottom:0.75rem;">❤️</div>
+              <h3>No donations yet</h3>
+              <p style="color:var(--color-text-muted); margin:0.5rem 0 1.25rem;">Support a meaningful community cause with verified PayPal checkout!</p>
+              <a href="/explore.html" class="btn btn-primary">Browse Causes</a>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = myDonationsList.map(d => {
+          return `
+            <div class="donation-item-card">
+              <div>
+                <a href="/campaign-detail.html?id=${d.campaign_id}" style="font-weight:700; font-size:1.05rem; color:var(--color-text-main); text-decoration:none;">
+                  ${escapeHtml(d.campaign_title || 'HelpFund Campaign')}
+                </a>
+                <div style="font-size:0.8rem; color:var(--color-text-muted); margin-top:0.25rem;">
+                  <span>Transaction ID: <code>${escapeHtml(d.paypal_capture_id || d.paypal_order_id)}</code></span> • 
+                  <span>${new Date(d.created_at).toLocaleDateString()}</span>
+                </div>
+                ${d.donor_message ? `<p style="font-size:0.85rem; color:var(--color-text-muted); font-style:italic; margin-top:0.35rem;">"${escapeHtml(d.donor_message)}"</p>` : ''}
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:1.3rem; font-weight:800; color:var(--color-primary-dark);">$${Number(d.amount).toFixed(2)} ${escapeHtml(d.currency)}</div>
+                <span class="badge badge-primary" style="font-size:0.75rem;">VERIFIED PAYPAL</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<p style="color:#ef4444; padding:2rem; text-align:center;">Could not load donations: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    /* Modal for posting Campaign Update */
+    function openUpdateModal(campaignId) {
+      document.getElementById('modal-campaign-id').value = campaignId;
+      document.getElementById('update-raw-notes').value = '';
+      document.getElementById('update-title').value = '';
+      document.getElementById('update-content').value = '';
+      document.getElementById('update-modal').style.display = 'flex';
+    }
+
+    function closeUpdateModal() {
+      document.getElementById('update-modal').style.display = 'none';
+    }
+
+    async function generateAiUpdateDraft() {
+      const notes = document.getElementById('update-raw-notes').value.trim();
+      const campaignId = document.getElementById('modal-campaign-id').value;
+      const btn = document.getElementById('btn-ai-draft');
+
+      if (notes.length < 5) {
+        if (window.showToast) showToast('Please enter at least 5 characters of progress notes.', 'warning');
+        else alert('Please enter at least 5 characters of progress notes.');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Drafting...';
+
+        const res = await ApiClient.post('/ai/draft-update', {
+          campaign_id: campaignId,
+          notes
+        });
+
+        if (res.data) {
+          if (res.data.update_title) document.getElementById('update-title').value = res.data.update_title;
+          if (res.data.update_content) document.getElementById('update-content').value = res.data.update_content;
+          if (window.showToast) showToast('AI progress update drafted successfully!', 'success');
+        }
+      } catch (err) {
+        if (window.showToast) showToast(err.message || 'Could not draft update.', 'error');
+        else alert(err.message || 'Could not draft update.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Draft Announcement';
+      }
+    }
+
+    async function publishUpdate() {
+      const campaignId = document.getElementById('modal-campaign-id').value;
+      const title = document.getElementById('update-title').value.trim();
+      const update_text = document.getElementById('update-content').value.trim();
+      const btn = document.getElementById('btn-publish-update');
+
+      if (!title || !update_text) {
+        if (window.showToast) showToast('Please provide an update headline and content.', 'warning');
+        else alert('Please provide an update headline and content.');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Publishing...';
+
+        await ApiClient.post(`/campaigns/${campaignId}/updates`, {
+          title,
+          update_text
+        });
+
+        if (window.showToast) showToast('Milestone update published to donors!', 'success');
+        closeUpdateModal();
+      } catch (err) {
+        if (window.showToast) showToast(err.message || 'Failed to publish update.', 'error');
+        else alert(err.message || 'Failed to publish update.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Publish Update';
+      }
+    }
+  </script>
 </body>
-
 </html>

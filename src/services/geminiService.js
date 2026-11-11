@@ -313,6 +313,107 @@ ${story_content}
       disclaimer: 'This score is an automated AI-generated advisory assessment based on text transparency and verifiability indicators. It does not constitute legal or financial verification.'
     };
   }
+
+  /**
+   * Predicts tangible real-world impact for a specific donation amount.
+   * 
+   * @param {object} params
+   * @param {string} params.campaignTitle
+   * @param {string} params.category
+   * @param {number} params.amount
+   * @param {number} params.targetAmount
+   * @returns {Promise<object>}
+   */
+  static async predictDonationImpact({ campaignTitle, category = 'Community', amount = 25, targetAmount = 5000 }) {
+    const systemPrompt = `
+You are a philanthropic impact analyst at HelpFund.
+Calculate and describe the concrete, real-world impact a specific donation dollar amount will have on this crowdfunding campaign.
+Return valid JSON matching this schema:
+{
+  "impact_summary": "1-2 inspiring sentences describing what this exact dollar amount accomplishes",
+  "tangible_deliverables": ["deliverable 1", "deliverable 2"],
+  "percentage_of_goal": 2.5
+}
+Keep it realistic, uplifting, and aligned with the campaign category. Return valid JSON only without markdown syntax.
+`.trim();
+
+    const userPrompt = `
+Campaign: ${campaignTitle}
+Category: ${category}
+Goal: $${targetAmount}
+Donation Amount: $${amount}
+`.trim();
+
+    const geminiResult = await callGemini(systemPrompt, userPrompt);
+    if (geminiResult && geminiResult.impact_summary) {
+      return { ...geminiResult, source: 'gemini' };
+    }
+
+    const pct = targetAmount > 0 ? parseFloat(((amount / targetAmount) * 100).toFixed(1)) : 1;
+    const deliverables = {
+      Medical: ['Provides essential medical prescription supplies and care materials', 'Covers diagnostic clinic lab fees'],
+      Education: ['Provides textbooks, stationery and digital learning packs', 'Funds classroom materials for students'],
+      Emergency: ['Supplies emergency shelf-stable meal kits for a family', 'Provides clean bottled drinking water and blankets'],
+      'Non-Profit': ['Funds outreach travel and distribution logistics', 'Provides direct community care packages'],
+      Creative: ['Purchases essential workshop art and digital production materials', 'Covers studio recording and exhibition fees'],
+      Community: ['Funds tools and seedling soil for community revitalization', 'Supports neighborhood improvement workshops']
+    };
+
+    const catDeliverables = deliverables[category] || [
+      'Directly funds critical supplies and operational resources',
+      `Helps achieve vital project milestones on the road to $${Number(targetAmount).toLocaleString()}`
+    ];
+
+    return {
+      source: 'fallback',
+      impact_summary: `Your contribution of $${amount} directly funds vital ${category.toLowerCase()} resources and advances this cause by ${pct}% toward its $${Number(targetAmount).toLocaleString()} target!`,
+      tangible_deliverables: catDeliverables,
+      percentage_of_goal: pct
+    };
+  }
+
+  /**
+   * Drafts an engaging progress update for backers from raw bullet points.
+   * 
+   * @param {object} params
+   * @param {string} params.campaignTitle
+   * @param {string} params.rawNotes
+   * @param {number} params.raisedAmount
+   * @param {number} params.targetAmount
+   * @returns {Promise<object>}
+   */
+  static async draftCampaignUpdate({ campaignTitle, rawNotes, raisedAmount = 0, targetAmount = 1000 }) {
+    const systemPrompt = `
+You are a senior community communications director at HelpFund.
+Transform rough creator bullet points into an inspiring, heartfelt backer progress update.
+Return valid JSON matching this schema:
+{
+  "update_title": "Catchy update headline (max 80 chars)",
+  "update_content": "A 2-3 paragraph warm narrative thanking backers and sharing recent milestones",
+  "next_milestone": "Short statement on the next upcoming deliverable"
+}
+Return valid JSON only without markdown formatting.
+`.trim();
+
+    const userPrompt = `
+Campaign: ${campaignTitle}
+Funds Raised So Far: $${raisedAmount} of $${targetAmount}
+Creator Progress Notes:
+${rawNotes}
+`.trim();
+
+    const geminiResult = await callGemini(systemPrompt, userPrompt);
+    if (geminiResult && geminiResult.update_title) {
+      return { ...geminiResult, source: 'gemini' };
+    }
+
+    return {
+      source: 'fallback',
+      update_title: `Milestone Update: Progress on ${campaignTitle.substring(0, 40)}`,
+      update_content: `We wanted to share a heartfelt thank you to all our generous backers! Because of your incredible support, we have already raised $${Number(raisedAmount).toLocaleString()} toward our goal.\n\n${rawNotes}\n\nEvery donation brings us closer to making a lasting difference. Thank you for standing with us!`,
+      next_milestone: 'Completing the next operational phase as we approach our target.'
+    };
+  }
 }
 
 module.exports = GeminiService;

@@ -245,9 +245,10 @@
             class="form-control" 
             placeholder="🔍 Search campaigns by title, medical need, school, community..."
           >
-          <select id="sort-select" class="form-control" style="max-width: 180px;">
+          <select id="sort-select" class="form-control" style="max-width: 200px;">
             <option value="newest">Newest First</option>
             <option value="most_funded">Most Funded</option>
+            <option value="highest_trust">Highest AI Trust Score</option>
             <option value="urgent">Expiring Soon</option>
             <option value="target">Highest Goal</option>
           </select>
@@ -325,14 +326,21 @@
             ? `<img src="${escapeHtml(c.image_url)}" alt="${escapeHtml(c.title)}" class="card-banner" onerror="this.outerHTML='<div class=\\'card-placeholder-banner\\'>🤝</div>'">`
             : `<div class="card-placeholder-banner">🤝</div>`;
 
+          const trustBadge = c.ai_trust_score !== null && c.ai_trust_score !== undefined
+            ? `<span class="badge ${c.ai_trust_score >= 80 ? 'badge-primary' : 'badge-secondary'}" style="font-size:0.75rem;">🛡️ AI Trust: ${c.ai_trust_score}</span>`
+            : '';
+
           return `
             <a href="/campaign-detail.html?id=${c.id}" class="campaign-card">
               ${bannerHtml}
               <div class="card-body">
-                <div class="card-meta">
-                  <span class="badge badge-primary">${escapeHtml(c.category)}</span>
+                <div class="card-meta" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                  <div style="display:flex; gap:0.4rem; align-items:center;">
+                    <span class="badge badge-primary">${escapeHtml(c.category)}</span>
+                    ${trustBadge}
+                  </div>
                   <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted);">
-                    ${c.days_left > 0 ? `${c.days_left} days left` : 'Finished'}
+                    ${c.days_left > 0 ? `${c.days_left}d left` : 'Finished'}
                   </span>
                 </div>
 
@@ -348,7 +356,7 @@
                     <div class="metric-raised">$${Number(c.raised_amount).toLocaleString()}</div>
                     <div class="metric-goal">raised of $${Number(c.target_amount).toLocaleString()}</div>
                   </div>
-                  <div style="font-weight: 700; color: var(--color-primary);">
+                  <div style="font-weight: 700; color: var(--color-primary); font-size: 1.05rem;">
                     ${c.progress_percentage}%
                   </div>
                 </div>

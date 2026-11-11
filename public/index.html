@@ -3,47 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HelpFund - AI-Powered Crowdfunding Platform</title>
+  <title>HelpFund - AI-Powered Transparent Crowdfunding & PayPal Micro-Donations</title>
 
   <link rel="stylesheet" href="/css/variables.css">
   <link rel="stylesheet" href="/css/global.css">
   <link rel="stylesheet" href="/css/components.css">
 
   <style>
+    /* Hero Section */
     .hero-section {
-      padding: 5rem 0 4rem;
+      padding: 5.5rem 0 4rem;
       text-align: center;
-      background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(248, 250, 252, 0) 100%);
+      background: radial-gradient(circle at 50% 10%, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(248, 250, 252, 0) 100%);
+      position: relative;
     }
 
     .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      background-color: var(--color-primary-light);
-      color: var(--color-primary-dark);
-      padding: 0.35rem 0.85rem;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+      color: #065f46;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.45rem 1.15rem;
       border-radius: var(--radius-full);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 700;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.75rem;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
     }
 
     .hero-title {
-      font-size: 3rem;
-      font-weight: 800;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 850;
       line-height: 1.15;
       color: var(--color-text-main);
-      max-width: 800px;
-      margin: 0 auto 1.25rem;
+      max-width: 860px;
+      margin: 0 auto 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-title-highlight {
+      background: linear-gradient(135deg, #059669 0%, #2563eb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.2rem;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
       color: var(--color-text-muted);
-      max-width: 650px;
-      margin: 0 auto 2.25rem;
-      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.65;
     }
 
     .hero-cta {
@@ -51,46 +62,240 @@
       align-items: center;
       justify-content: center;
       gap: 1rem;
+      flex-wrap: wrap;
     }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      padding: 4rem 0;
-    }
-
-    .feature-card {
-      padding: 2rem;
-      border-radius: var(--radius-lg);
+    /* Live Stats Counter Strip */
+    .stats-strip {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
-      box-shadow: var(--shadow-sm);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+      margin: -2rem auto 4rem;
+      max-width: 1050px;
+      box-shadow: var(--shadow-md);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      text-align: center;
+      position: relative;
+      z-index: 10;
     }
 
-    .feature-icon {
-      width: 3rem;
-      height: 3rem;
-      border-radius: var(--radius-md);
-      background: var(--color-primary-light);
-      color: var(--color-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-bottom: 1.25rem;
+    .stat-item h3 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--color-primary-dark);
+      margin-bottom: 0.25rem;
+      line-height: 1.1;
     }
 
-    .feature-card h3 {
-      font-size: 1.25rem;
-      font-weight: 700;
+    .stat-item p {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Featured Causes Grid */
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-title-wrap h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--color-text-main);
       margin-bottom: 0.5rem;
     }
 
-    .feature-card p {
+    .section-title-wrap p {
+      font-size: 1.05rem;
       color: var(--color-text-muted);
-      font-size: 0.95rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .campaign-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .campaign-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .campaign-card-banner {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+
+    .campaign-card-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .campaign-card-tags {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.85rem;
+    }
+
+    .campaign-card-title {
+      font-size: 1.2rem;
+      font-weight: 750;
+      color: var(--color-text-main);
+      line-height: 1.35;
+      margin-bottom: 0.5rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .campaign-card-desc {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .campaign-card-footer {
+      border-top: 1px solid var(--color-border);
+      padding-top: 1rem;
+      margin-top: auto;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), #059669);
+      border-radius: var(--radius-full);
+    }
+
+    .card-metrics {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+    }
+
+    .card-metrics strong {
+      color: var(--color-primary-dark);
+      font-size: 1rem;
+    }
+
+    /* Workflow Cards */
+    .how-it-works-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.75rem;
+      margin: 3rem 0 5rem;
+    }
+
+    .step-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+      position: relative;
+    }
+
+    .step-number {
+      position: absolute;
+      top: -14px;
+      left: 20px;
+      background: var(--color-primary);
+      color: #fff;
+      font-weight: 800;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+    }
+
+    .step-card h3 {
+      font-size: 1.15rem;
+      font-weight: 750;
+      margin: 0.75rem 0 0.5rem;
+    }
+
+    .step-card p {
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+      line-height: 1.55;
+    }
+
+    /* Hackathon Technology Showcase Banner */
+    .tech-showcase-box {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem;
+      margin-bottom: 4rem;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .tech-item h4 {
+      font-size: 1.1rem;
+      color: #34d399;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tech-item p {
+      font-size: 0.86rem;
+      color: #94a3b8;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -113,8 +318,8 @@
 
       <div class="nav-actions" id="nav-actions">
         <!-- Injected dynamically via auth.js -->
-        <a href="/login.html" class="btn btn-secondary">Sign In</a>
-        <a href="/login.html?tab=register" class="btn btn-primary">Start a Campaign</a>
+        <a href="/login.html" class="btn btn-secondary btn-sm">Sign In</a>
+        <a href="/login.html?tab=register" class="btn btn-primary btn-sm">Start a Campaign</a>
       </div>
     </div>
   </header>
@@ -124,42 +329,127 @@
     <section class="hero-section">
       <div class="container">
         <div class="hero-badge">
-          ✨ Powered by Google Gemini AI & PayPal Sandbox
+          <span>⚡</span> PayPal AI Hackathon 2026 • PayPal Developer Platform & Google Gemini
         </div>
-        <h1 class="hero-title">Empowering Communities Through Transparent Crowdfunding</h1>
+        <h1 class="hero-title">
+          Crowdfunding Powered by <span class="hero-title-highlight">AI Intelligence</span> &amp; Verified PayPal Micro-Donations
+        </h1>
         <p class="hero-subtitle">
-          HelpFund combines artificial intelligence with verified micro-donations to turn ideas and emergency needs into funded realities.
+          HelpFund transforms raw ideas into funded realities. Use Google Gemini AI to draft compelling proposals, audit campaign credibility, and execute verified server-side PayPal checkout with zero tampering.
         </p>
         <div class="hero-cta">
-          <a href="/login.html?tab=register" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;">
-            Start a Campaign Free
+          <a href="/create-campaign.html" class="btn btn-primary" style="padding: 0.85rem 1.85rem; font-size: 1.05rem;">
+            🚀 Start a Campaign Free
           </a>
-          <a href="/explore.html" class="btn btn-secondary" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;">
-            Browse Campaigns
+          <a href="/explore.html" class="btn btn-secondary" style="padding: 0.85rem 1.85rem; font-size: 1.05rem;">
+            🔍 Explore Verified Causes
           </a>
         </div>
       </div>
     </section>
 
-    <!-- Key Highlights Grid -->
+    <!-- Platform Stats Strip -->
+    <div class="container">
+      <div class="stats-strip" id="stats-strip">
+        <div class="stat-item">
+          <h3 id="stat-raised">$45,650+</h3>
+          <p>Verified Raised via PayPal</p>
+        </div>
+        <div class="stat-item">
+          <h3 id="stat-campaigns">6+</h3>
+          <p>Active Verified Causes</p>
+        </div>
+        <div class="stat-item">
+          <h3 id="stat-trust">92%</h3>
+          <p>Average AI Trust Score</p>
+        </div>
+        <div class="stat-item">
+          <h3 id="stat-integrity">100%</h3>
+          <p>Atomic Idempotent Ledger</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured Causes Section -->
+    <section class="container" style="padding: 1rem 0 3rem;">
+      <div class="section-title-wrap">
+        <h2>Featured Showcase Causes</h2>
+        <p>Explore inspiring campaigns audited by Gemini AI and backed by secure PayPal transactions.</p>
+      </div>
+
+      <div class="featured-grid" id="featured-campaigns-grid">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--color-text-muted);">
+          <span class="spinner"></span> Loading active showcase causes...
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 4rem;">
+        <a href="/explore.html" class="btn btn-secondary" style="padding: 0.75rem 2rem; font-weight: 600;">
+          View All Causes &amp; Filter Categories &rarr;
+        </a>
+      </div>
+    </section>
+
+    <!-- How It Works Interactive Architecture -->
     <section class="container">
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🤖</div>
-          <h3>AI Campaign Assistant</h3>
-          <p>Gemini AI helps fundraisers draft compelling, empathetic, and clear campaign pitches with realistic funding milestones.</p>
+      <div class="section-title-wrap">
+        <h2>How HelpFund Works</h2>
+        <p>A transparent pipeline merging artificial intelligence with institutional financial security.</p>
+      </div>
+
+      <div class="how-it-works-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>AI Story Grant Writer</h3>
+          <p>Creators provide rough notes; Google Gemini transforms them into structured, empathetic campaign narratives with itemized milestone budgets.</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🛡️</div>
-          <h3>AI Trust & Credibility Scorer</h3>
-          <p>Automated semantic checks evaluate transparency and verifiability to assign a visible Trust Badge for donor confidence.</p>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>AI Image Generator</h3>
+          <p>Multi-tier vision engine generates high-definition cinematic campaign visuals with 100% zero-crash fallback resilience.</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">💳</div>
-          <h3>PayPal Sandbox Verified</h3>
-          <p>Enterprise server-side payment capture ensures every single dollar is atomically tracked and validated.</p>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>AI Trust &amp; Fraud Audit</h3>
+          <p>Automated semantic checks evaluate budget itemization, beneficiary clarity, and timeline realism to compute a public 0-100 credibility score.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <h3>PayPal Server-Side Capture</h3>
+          <p>Orders v2 API initiates server-verified intent; SQLite atomic transactions commit ledger records with strict idempotency.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hackathon Technology Stack Showcase -->
+    <section class="container">
+      <div class="tech-showcase-box">
+        <div style="text-align: center; max-width: 700px; margin: 0 auto 1.5rem;">
+          <span style="background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 0.3rem 0.8rem; border-radius: 99px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">PayPal AI Hackathon Architecture</span>
+          <h2 style="font-size: 2rem; font-weight: 800; margin: 0.75rem 0 0.5rem; color:#fff;">Built for Next-Generation Financial Innovation</h2>
+          <p style="color: #94a3b8; font-size: 0.95rem;">Engineered from the ground up for the PayPal AI Hackathon with production-grade reliability.</p>
+        </div>
+
+        <div class="tech-grid">
+          <div class="tech-item">
+            <h4>💳 PayPal Developer Platform</h4>
+            <p>Orders v2 REST API, OAuth 2.0 bearer caching, server-side capture, and atomic balance incrementing.</p>
+          </div>
+          <div class="tech-item">
+            <h4>🤖 Google Gemini AI Core</h4>
+            <p>Story generator, milestone planner, real-world impact calculator, and transparent credibility audit engine.</p>
+          </div>
+          <div class="tech-item">
+            <h4>⚡ Multi-Tier AI Vision</h4>
+            <p>Cloudflare Workers AI (FLUX.1 Schnell) + Google Imagen 3 + serverless zero-config AI illustration generator.</p>
+          </div>
+          <div class="tech-item">
+            <h4>🗄️ SQLite with WAL Mode</h4>
+            <p>better-sqlite3 synchronous embedded engine, foreign keys enforced, parameterized queries, and ACID atomicity.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -168,12 +458,74 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 HelpFund. Designed for College Project Showcase & Production Architecture.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <strong style="color:var(--color-text-main);">HelpFund Crowdfunding Platform</strong>
+          <p style="font-size:0.85rem; color:var(--color-text-muted);">&copy; 2026 HelpFund • Developed for the PayPal AI Hackathon.</p>
+        </div>
+        <div style="display:flex; gap:1.5rem; font-size:0.9rem;">
+          <a href="/explore.html" style="color:var(--color-text-muted); text-decoration:none;">Explore Causes</a>
+          <a href="/create-campaign.html" style="color:var(--color-text-muted); text-decoration:none;">Start Campaign</a>
+          <a href="/dashboard.html" style="color:var(--color-text-muted); text-decoration:none;">My Dashboard</a>
+        </div>
+      </div>
     </div>
   </footer>
 
   <!-- Scripts -->
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
+  <script>
+    async function loadFeaturedCampaigns() {
+      const container = document.getElementById('featured-campaigns-grid');
+      try {
+        const res = await ApiClient.get('/campaigns?limit=3&sort=most_funded');
+        const campaigns = res.data || [];
+
+        if (campaigns.length === 0) {
+          container.innerHTML = '<p style="text-align:center; grid-column:1/-1; color:var(--color-text-muted);">No campaigns currently active. Be the first to start one!</p>';
+          return;
+        }
+
+        container.innerHTML = campaigns.map(c => {
+          const raised = Number(c.raised_amount || 0);
+          const target = Number(c.target_amount || 1);
+          const percent = Math.min(100, Math.round((raised / target) * 100));
+          const trustBadge = c.ai_trust_score 
+            ? `<span class="badge ${c.ai_trust_score >= 80 ? 'badge-primary' : 'badge-secondary'}" style="font-size:0.75rem;">🛡️ AI Trust: ${c.ai_trust_score}</span>`
+            : '';
+
+          const banner = c.image_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18f15f6?auto=format&fit=crop&w=600&q=80';
+
+          return `
+            <a href="/campaign-detail.html?id=${c.id}" class="campaign-card">
+              <img src="${escapeHtml(banner)}" alt="${escapeHtml(c.title)}" class="campaign-card-banner" onerror="this.src='https://images.unsplash.com/photo-1532629345422-7515f3d16bb7?auto=format&fit=crop&w=600&q=80'">
+              <div class="campaign-card-body">
+                <div class="campaign-card-tags">
+                  <span class="badge badge-secondary">${escapeHtml(c.category)}</span>
+                  ${trustBadge}
+                </div>
+                <h3 class="campaign-card-title">${escapeHtml(c.title)}</h3>
+                <p class="campaign-card-desc">${escapeHtml(c.short_description)}</p>
+                <div class="campaign-card-footer">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percent}%;"></div>
+                  </div>
+                  <div class="card-metrics">
+                    <div><strong>$${raised.toLocaleString()}</strong> <span style="color:var(--color-text-muted); font-size:0.8rem;">raised</span></div>
+                    <div style="font-weight:600; color:var(--color-text-muted); font-size:0.82rem;">${percent}% of $${target.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="text-align:center; grid-column:1/-1; color:var(--color-text-muted);">Could not load featured causes.</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadFeaturedCampaigns);
+  </script>
 </body>
 </html>

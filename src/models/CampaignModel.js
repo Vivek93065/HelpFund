@@ -110,6 +110,8 @@ class CampaignModel {
       orderBy = 'c.deadline ASC';
     } else if (sort === 'target') {
       orderBy = 'c.target_amount DESC';
+    } else if (sort === 'trust' || sort === 'highest_trust') {
+      orderBy = 'c.ai_trust_score DESC';
     }
 
     const whereSql = whereClauses.join(' AND ');
@@ -238,6 +240,36 @@ class CampaignModel {
       ORDER BY created_at DESC
     `);
     return stmt.all(Number(userId));
+  }
+
+  /**
+   * Adds a milestone progress update to a campaign.
+   */
+  static addUpdate(campaignId, title, updateText) {
+    const stmt = db.prepare(`
+      INSERT INTO campaign_updates (campaign_id, title, update_text)
+      VALUES (?, ?, ?)
+    `);
+    const res = stmt.run(Number(campaignId), title.trim(), updateText.trim());
+    return {
+      id: Number(res.lastInsertRowid),
+      campaign_id: Number(campaignId),
+      title: title.trim(),
+      update_text: updateText.trim(),
+      created_at: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Retrieves all progress updates for a campaign.
+   */
+  static getUpdates(campaignId) {
+    const stmt = db.prepare(`
+      SELECT * FROM campaign_updates
+      WHERE campaign_id = ?
+      ORDER BY created_at DESC
+    `);
+    return stmt.all(Number(campaignId));
   }
 }
 

@@ -40,4 +40,20 @@ router.post(
   AiController.generateImage
 );
 
+// AI Donation Impact Predictor: Accessible to all donors (Rate Limited)
+router.post(
+  '/predict-impact',
+  aiLimiter,
+  AiController.predictImpact
+);
+
+// AI Campaign Update Drafter: Restricted to Creator or Admin roles
+router.post(
+  '/draft-update',
+  authenticate,
+  requireRole('creator', 'admin'),
+  aiLimiter,
+  AiController.draftUpdate
+);
+
 module.exports = router;

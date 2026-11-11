@@ -349,6 +349,13 @@
 
       <div class="form-group">
         <label class="form-label">Rough Notes & Key Details *</label>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+          <span style="font-size:0.78rem; color:var(--color-text-muted); align-self:center;">Try an example:</span>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="setAiExample('medical')">🏥 Pediatric Heart Care</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="setAiExample('education')">📚 Youth Robotics STEM</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="setAiExample('water')">🌱 Community Solar Well</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="setAiExample('emergency')">🚨 Emergency Relief</button>
+        </div>
         <textarea 
           id="ai-notes-input" 
           class="form-control" 
@@ -479,7 +486,7 @@ async function generateCampaignImage() {
   try {
     generateBtn.disabled = true;
     regenerateBtn.disabled = true;
-    generateBtn.innerHTML = 'Generating...';
+    generateBtn.innerHTML = '<span class="spinner"></span> Generating AI Visual...';
     clearAlert();
 
     const result = await ApiClient.post('/ai/generate-image', {
@@ -516,7 +523,8 @@ async function generateCampaignImage() {
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 
     regenerateBtn.style.display = 'inline-block';
-    showAlert('AI image generated! Review the preview before publishing.', 'success');
+    showAlert('✨ AI campaign visual generated! Review the banner preview.', 'success');
+    if (window.showToast) showToast('AI visual generated successfully!', 'success');
 
   } catch (error) {
     showAlert(error.message || 'Could not generate image. Please try again.');
@@ -527,6 +535,44 @@ async function generateCampaignImage() {
   }
 }
 
+    function setAiExample(type) {
+      const examples = {
+        medical: {
+          category: 'Medical',
+          beneficiary: 'underprivileged pediatric patients',
+          target: 12000,
+          notes: 'Need $12,000 to fund post-cardiac surgery recovery care packages for 40 children in regional clinics. Each package includes sterile dressings, 90-day medication kits, pulse oximeters, and home visits by visiting nurses.'
+        },
+        education: {
+          category: 'Education',
+          beneficiary: 'public school STEM students',
+          target: 8500,
+          notes: 'Setting up an open-source robotics and coding laboratory for 120 middle schoolers. Need funding for 20 Arduino micro-controller starter kits, 10 refurbished laptops, sensors, and regional student robotics competition entry fees.'
+        },
+        water: {
+          category: 'Community',
+          beneficiary: 'village residents',
+          target: 14000,
+          notes: 'Constructing a 120-meter deep solar-powered borehole well to provide safe drinking water for 2,500 rural villagers who currently walk 6km to contaminated boreholes.'
+        },
+        emergency: {
+          category: 'Emergency',
+          beneficiary: 'coastal families displaced by flash floods',
+          target: 10000,
+          notes: 'Urgent relief aid for 350 homes flooded by coastal storm. Providing 200 heavy-duty waterproof tarps, clean dry bedding kits, 500 family water purification filter packs, and infant nutrition rations.'
+        }
+      };
+
+      const ex = examples[type];
+      if (!ex) return;
+
+      document.getElementById('ai-notes-input').value = ex.notes;
+      document.getElementById('ai-beneficiary-input').value = ex.beneficiary;
+      document.getElementById('ai-goal-input').value = ex.target;
+      const catSelect = document.getElementById('campaign-category');
+      if (catSelect) catSelect.value = ex.category;
+      if (window.showToast) showToast(`Loaded ${ex.category} demonstration example!`, 'info');
+    }
 
     // Alert functions
     function showAlert(msg, type = 'error') {
@@ -535,6 +581,9 @@ async function generateCampaignImage() {
       box.textContent = msg;
       box.style.display = 'block';
       box.scrollIntoView({ behavior: 'smooth' });
+      if (window.showToast) {
+        showToast(msg, type === 'error' ? 'error' : 'success');
+      }
     }
 
     function clearAlert() {

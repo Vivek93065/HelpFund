@@ -32,6 +32,17 @@ router.get(
 );
 router.get('/:id', CampaignController.getCampaignById);
 
+// Public: Campaign Updates
+router.get('/:id/updates', CampaignController.getCampaignUpdates);
+
+// Protected: Post Campaign Update
+router.post(
+  '/:id/updates',
+  authenticate,
+  requireRole('creator', 'admin'),
+  CampaignController.addCampaignUpdate
+);
+
 // Protected: Campaign Creation (requires Creator or Admin role)
 router.post(
   '/',
