@@ -10,6 +10,7 @@
 
 const GeminiService = require('../services/geminiService');
 const CampaignModel = require('../models/CampaignModel');
+const ImageGenerationService = require('../services/imageGenerationService');
 
 class AiController {
   /**
@@ -92,6 +93,54 @@ class AiController {
       return res.status(200).json({
         success: true,
         data: analysis
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+    /**
+   * Generates an AI illustration for a campaign.
+   * POST /api/ai/generate-image
+   */
+  static async generateImage(req, res, next) {
+    try {
+      const { title, category, description } = req.body;
+
+      if (
+        !title || typeof title !== 'string' ||
+        !category || typeof category !== 'string' ||
+        !description || typeof description !== 'string'
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'Campaign title, category and description are required.'
+        });
+      }
+
+      if (
+        title.trim().length < 5 ||
+        title.length > 150 ||
+        description.trim().length < 10 ||
+        description.length > 1000
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'Please provide valid campaign details.'
+        });
+      }
+
+      const image = await ImageGenerationService.generateCampaignImage({
+        title: title.trim(),
+        category: category.trim(),
+        description: description.trim()
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          image,
+          mimeType: 'image/jpeg'
+        }
       });
     } catch (error) {
       next(error);

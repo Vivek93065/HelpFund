@@ -205,7 +205,32 @@
                 <div class="form-hint">Supports JPEG, PNG, or WEBP (Max 5MB)</div>
               </div>
               <img id="image-preview" class="preview-image" alt="Banner Preview">
-            </div>
+
+<div style="margin-top: 1rem;">
+  <button
+    type="button"
+    id="generate-image-btn"
+    class="btn btn-primary"
+    onclick="event.stopPropagation(); generateCampaignImage()"
+  >
+    ✨ Generate Image with AI
+  </button>
+
+  <button
+    type="button"
+    id="regenerate-image-btn"
+    class="btn btn-secondary"
+    onclick="event.stopPropagation(); generateCampaignImage()"
+    style="display: none; margin-left: 0.5rem;"
+  >
+    ↻ Regenerate
+  </button>
+
+  <p class="form-hint" style="margin-top: 0.5rem;">
+    Or upload your own image above. AI-generated images are illustrative.
+  </p>
+</div>
+
           </div>
 
           <!-- Campaign Title -->
@@ -422,6 +447,86 @@
         reader.readAsDataURL(file);
       }
     });
+
+
+async function generateCampaignImage() {
+  if (!Auth.isLoggedIn()) {
+    showAlert('Please sign in first.');
+    return;
+  }
+
+  const title = document.getElementById('campaign-title').value.trim();
+  const category = document.getElementById('campaign-category').value || 'Community';
+
+  const description =
+    document.getElementById('campaign-story').value.trim() ||
+    document.getElementById('campaign-short-desc').value.trim();
+    
+  if (title.length < 5) {
+    showAlert('Please enter a campaign title of at least 5 characters.');
+    return;
+  }
+
+  if (description.length < 10) {
+    showAlert('Please enter a short description or story of at least 10 characters.');
+    return;
+  }
+
+  const generateBtn = document.getElementById('generate-image-btn');
+  const regenerateBtn = document.getElementById('regenerate-image-btn');
+  const originalText = generateBtn.innerHTML;
+
+  try {
+    generateBtn.disabled = true;
+    regenerateBtn.disabled = true;
+    generateBtn.innerHTML = 'Generating...';
+    clearAlert();
+
+    const result = await ApiClient.post('/ai/generate-image', {
+      title,
+      category,
+      description
+    });
+
+    if (!result.success || !result.data?.image) {
+      throw new Error(result.error || 'No image received.');
+    }
+
+    const binary = atob(result.data.image);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const mimeType = result.data.mimeType || 'image/jpeg';
+    const blob = new Blob([bytes], { type: mimeType });
+    const file = new File([blob], 'ai-campaign-image.jpg', {
+      type: mimeType
+    });
+
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('Generated image exceeds the 5 MB upload limit.');
+    }
+
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    fileInput.files = transfer.files;
+
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    regenerateBtn.style.display = 'inline-block';
+    showAlert('AI image generated! Review the preview before publishing.', 'success');
+
+  } catch (error) {
+    showAlert(error.message || 'Could not generate image. Please try again.');
+  } finally {
+    generateBtn.disabled = false;
+    regenerateBtn.disabled = false;
+    generateBtn.innerHTML = originalText;
+  }
+}
+
 
     // Alert functions
     function showAlert(msg, type = 'error') {

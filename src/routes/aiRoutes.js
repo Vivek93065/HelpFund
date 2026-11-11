@@ -31,4 +31,13 @@ router.post(
   AiController.analyzeTrust
 );
 
+// AI Campaign Image Generator: Restricted to Creator or Admin roles
+router.post(
+  '/generate-image',
+  authenticate,
+  requireRole('creator', 'admin'),
+  aiLimiter,
+  AiController.generateImage
+);
+
 module.exports = router;

@@ -117,21 +117,36 @@ class GeminiService {
    * @returns {Promise<object>}
    */
   static async generateCampaignStory({ notes, category = 'Community', target_amount = 5000, beneficiary = 'our community' }) {
-    const systemPrompt = `
+    
+const systemPrompt = `
 You are a senior philanthropic grant writer and crowdfunding storytelling expert for the HelpFund platform.
-Your task is to take a fundraiser's raw notes and produce an engaging, empathetic, grammatically polished, and transparent campaign proposal.
-You must return a valid JSON object matching this exact schema:
+
+Your task is to transform rough fundraiser notes into an engaging, empathetic, grammatically polished and transparent campaign proposal.
+
+Return a valid JSON object matching this exact schema:
 {
-  "suggested_title": "A clear, compelling, transparent title (max 90 chars)",
-  "short_description": "A 1-2 sentence hook summarizing the urgent need and impact (max 200 chars)",
-  "story_content": "A well-structured markdown narrative with sections: 'The Challenge', 'How Every Dollar Will Be Used', and 'Immediate Impact'.",
+  "suggested_title": "A clear, compelling title (max 90 characters)",
+  "short_description": "A concise 1-2 sentence summary (max 200 characters)",
+  "story_content": "A professionally written plain-text narrative with three section headings: The Challenge, How Every Dollar Will Be Used, and Immediate Impact.",
   "suggested_tags": ["Tag1", "Tag2", "Tag3"],
   "recommended_milestones": [
     { "phase": "Phase 1: Immediate Relief", "target_amount": 2500, "description": "Specific deliverables" },
     { "phase": "Phase 2: Full Implementation", "target_amount": 5000, "description": "Long-term sustainability" }
   ]
 }
+
+IMPORTANT WRITING RULES:
+- Return valid JSON only.
+- Never use Markdown syntax such as ###, ##, **, *, or bullet symbols.
+- Use simple section headings without decorative characters.
+- Write the story in natural, well-organized paragraphs.
+- Keep the short description concise and impactful.
+- Do not invent statistics, beneficiary details, expenses or achievements.
+- Use only information supported by the user's notes.
+- Keep funding breakdowns realistic and consistent with the target amount.
+- Make the proposal professional, trustworthy and suitable for a crowdfunding platform.
 `.trim();
+
 
     const userPrompt = `
 Category: ${category}
@@ -155,7 +170,21 @@ ${notes}
     return {
       suggested_title: `Support for ${category} Initiative: ${cleanNotes.substring(0, 45).replace(/\n/g, ' ')}...`,
       short_description: `Join us in supporting ${beneficiary} with urgent ${category.toLowerCase()} funding to achieve lasting community impact.`,
-      story_content: `### The Challenge\n${cleanNotes}\n\n### How Every Dollar Will Be Used\nEvery contribution goes directly toward critical resources, transparently itemized to ensure maximum community accountability:\n- Core Supplies and Logistics: $${phase1.toLocaleString()}\n- Project Execution & Program Delivery: $${(phase2 - phase1).toLocaleString()}\n\n### Immediate Impact\nWith your generous backing, we can reach our milestone goal of $${target.toLocaleString()} and deliver verifiable, tangible results for ${beneficiary}. Thank you for standing with us!`,
+      
+story_content: `The Challenge
+
+${cleanNotes}
+
+How Every Dollar Will Be Used
+
+The campaign aims to raise $${target.toLocaleString()}.
+Phase 1: Core Supplies and Logistics - $${phase1.toLocaleString()}.
+Phase 2: Project Execution and Delivery - $${(phase2 - phase1).toLocaleString()}.
+
+Immediate Impact
+
+Your support can help ${beneficiary} by contributing toward the campaign goals. Every contribution brings the project closer to its intended outcome. Thank you for your support!`,
+
       suggested_tags: [category, 'CommunityImpact', 'TransparentGiving'],
       recommended_milestones: [
         {

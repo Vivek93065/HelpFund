@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard | HelpFund</title>
+
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <style>
+    .dashboard-main {
+      padding: 2.5rem 0;
+    }
+
+    .dashboard-header {
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .dashboard-header p {
+      color: var(--color-text-muted);
+    }
+
+    .dashboard-content {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      min-height: 250px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .loading-message {
+      text-align: center;
+      color: var(--color-text-muted);
+      padding: 3rem 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .dashboard-content {
+        padding: 1.25rem;
+      }
+
+      .dashboard-header h1 {
+        font-size: 1.6rem;
+      }
+    }
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card, .campaign-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card h3 {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.stat-card p {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.campaign-card h3 {
+  margin-bottom: 0.35rem;
+}
+
+.campaign-card p {
+  color: var(--color-text-muted);
+  margin: 0.4rem 0;
+}
+
+.progress-track {
+  height: 9px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: 0.6rem 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <header class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="brand-logo">
+        <span class="brand-icon">H</span>
+        Help<span class="brand-highlight">Fund</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/explore.html" class="nav-link">Explore Causes</a>
+      </nav>
+
+      <div class="nav-actions" id="nav-actions"></div>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+
+      <section class="dashboard-header">
+        <h1 id="welcome-heading">My Dashboard</h1>
+        <p id="welcome-description">Manage your activity on HelpFund.</p>
+      </section>
+
+      <section class="dashboard-content" id="dashboard-content">
+        <p class="loading-message">Loading your dashboard...</p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>© 2026 HelpFund. Making a difference together.</p>
+    </div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = Auth.getUser();
+    const dashboard = document.getElementById('dashboard-content');
+
+    if (!Auth.isLoggedIn() || !user) {
+      window.location.href = '/login.html';
+      return;
+    }
+
+    document.getElementById('welcome-heading').textContent =
+      `Welcome, ${user.full_name}!`;
+
+    if (user.role === 'creator' || user.role === 'admin') {
+      document.getElementById('welcome-description').textContent =
+        'Track your campaigns and fundraising progress.';
+
+      await loadCreatorDashboard();
+    } else if (user.role === 'donor') {
+      document.getElementById('welcome-description').textContent =
+        'Track your contributions and the causes you support.';
+
+      await loadDonorDashboard();
+    } else {
+      dashboard.textContent = 'Unknown user role.';
+    }
+  });
+
+  async function loadCreatorDashboard() {
+    const dashboard = document.getElementById('dashboard-content');
+
+    try {
+      const response = await ApiClient.get('/campaigns/my');
+      const campaigns = response.data || [];
+
+      const totalRaised = campaigns.reduce(
+        (sum, campaign) => sum + Number(campaign.raised_amount || 0), 0
+      );
+
+      dashboard.innerHTML = `
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <h3>Total Campaigns</h3>
+            <p>${campaigns.length}</p>
+          </div>
+
+          <div class="stat-card">
+            <h3>Total Amount Raised</h3>
+            <p>$${totalRaised.toFixed(2)}</p>
+          </div>
+        </div>
+
+        <div class="campaign-section">
+          <div class="section-heading">
+            <h2>My Campaigns</h2>
+            <a href="/create-campaign.html" class="btn btn-primary">
+              + Create Campaign
+            </a>
+          </div>
+
+          <div id="campaign-list"></div>
+        </div>
+      `;
+
+      const campaignList = document.getElementById('campaign-list');
+
+      if (campaigns.length === 0) {
+        campaignList.innerHTML = `
+          <p>You haven't created any campaigns yet.</p>
+          <p>Start your first campaign and make a difference!</p>
+        `;
+        return;
+      }
+
+      campaignList.innerHTML = campaigns.map(campaign => {
+        const raised = Number(campaign.raised_amount || 0);
+        const target = Number(campaign.target_amount || 0);
+        const progress = target > 0
+          ? Math.min((raised / target) * 100, 100)
+          : 0;
+
+        return `
+          <div class="campaign-card">
+            <h3>${escapeHTML(campaign.title)}</h3>
+            <p>${escapeHTML(campaign.category)}</p>
+
+            <p>
+              $${raised.toFixed(2)} raised of $${target.toFixed(2)}
+            </p>
+
+            <div class="progress-track">
+              <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+
+            <p>${progress.toFixed(1)}% funded</p>
+            <span class="status-badge">
+              ${escapeHTML(campaign.status)}
+            </span>
+          </div>
+        `;
+      }).join('');
+
+    } catch (error) {
+      dashboard.innerHTML = `
+        <p>Unable to load campaigns: ${escapeHTML(error.message)}</p>
+        <button class="btn btn-secondary" onclick="loadCreatorDashboard()">
+          Try Again
+        </button>
+      `;
+    }
+  }
+
+  async function loadDonorDashboard() {
+    // Donor dashboard functionality will be added next.
+    document.getElementById('dashboard-content').innerHTML =
+      '<p>Donor dashboard is coming next.</p>';
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    })[char]);
+  }
+</script>
+
+</body>
+
+</html>
