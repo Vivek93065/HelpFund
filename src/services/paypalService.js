@@ -10,9 +10,9 @@
  *    the temporary order ID to approve in the PayPal modal; payment authorization & capture are
  *    exclusively executed and verified server-side.
  * 3. Token & Secret Confidentiality: PayPal client secrets are never exposed to clients or logged.
- * 4. Deterministic Sandbox/Test Fallback: If sandbox credentials are unconfigured in development/testing,
- *    an intelligent sandbox mock engine operates with full schema fidelity so developers and test suites
- *    can run realistic end-to-end transactions without external gateway network dependencies.
+ * 4. Test-only Simulation: A mock engine exists ONLY when NODE_ENV === 'test' so the automated test suite
+ *    runs offline. In development/production a missing or invalid credential raises a clear error;
+ *    it never silently falls back to fake payments.
  */
 
 const config = require('../config/env');
@@ -35,9 +35,15 @@ class PayPalService {
   static async getAccessToken() {
     const { clientId, clientSecret, apiBase } = config.paypal;
 
+    const isTestEnv = config.nodeEnv === 'test';
+
     // Check if valid credentials exist
     if (!clientId || !clientSecret || clientId.includes('your_paypal') || clientSecret.includes('your_paypal')) {
-      return null; // Signals sandbox simulation mode
+      // Simulation mode is ONLY allowed inside the automated test suite.
+      if (isTestEnv) return null;
+      const err = new Error('PayPal is not configured. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in your .env file.');
+      err.status = 503;
+      throw err;
     }
 
     // Return cached token if valid (with 60-second buffer)
@@ -60,7 +66,10 @@ class PayPalService {
       if (!response.ok) {
         const errorText = await response.text();
         console.warn(`[PayPal OAuth Warning] HTTP ${response.status}: ${errorText.substring(0, 200)}`);
-        return null;
+        if (isTestEnv) return null;
+        const err = new Error('PayPal authentication failed. Check PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET (Sandbox credentials).');
+        err.status = 502;
+        throw err;
       }
 
       const data = await response.json();
@@ -69,8 +78,12 @@ class PayPalService {
 
       return tokenCache.accessToken;
     } catch (err) {
+      if (err.status) throw err; // already a descriptive error from above
       console.warn(`[PayPal OAuth Network Error] ${err.message}.`);
-      return null;
+      if (isTestEnv) return null;
+      const netErr = new Error('Could not reach PayPal. Check your internet connection and try again.');
+      netErr.status = 502;
+      throw netErr;
     }
   }
 
@@ -221,7 +234,7 @@ class PayPalService {
 
     // Sandbox Simulation Capture Flow
     const existingMock = mockOrderStore.get(orderId);
-    if (!existingMock && !orderId.startsWith('PAYPAL-SANDBOX-') && !orderId.startsWith('TEST-ORDER-')) {
+    if (!existingMock) {
       const err = new Error('PayPal order not found or already expired.');
       err.status = 404;
       throw err;
@@ -263,7 +276,7 @@ class PayPalService {
    */
   static getClientConfig() {
     return {
-      clientId: config.paypal.clientId || 'sandbox',
+      clientId: config.paypal.clientId || '',
       currency: 'USD'
     };
   }

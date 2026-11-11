@@ -10,7 +10,8 @@
  */
 
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-const ALLOWED_ROLES = ['creator', 'donor', 'admin'];
+// 'admin' is intentionally NOT self-assignable at registration (privilege escalation).
+const ALLOWED_ROLES = ['creator', 'donor'];
 
 /**
  * Validates an email address format and sanitizes it (trims & lowercases).

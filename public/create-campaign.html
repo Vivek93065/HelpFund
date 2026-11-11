@@ -592,6 +592,12 @@ async function generateCampaignImage() {
 
         generatedAiData = res.data;
 
+        if (generatedAiData.source === 'fallback') {
+          alertBox.className = 'alert alert-error';
+          alertBox.textContent = 'Gemini AI is unavailable right now (check GEMINI_API_KEY / GEMINI_MODEL). This is basic template text, not an AI-written story.';
+          alertBox.style.display = 'block';
+        }
+
         // Render preview fields
         document.getElementById('ai-preview-title').value = generatedAiData.suggested_title || '';
         document.getElementById('ai-preview-summary').value = generatedAiData.short_description || '';
@@ -601,7 +607,7 @@ async function generateCampaignImage() {
         if (Array.isArray(generatedAiData.recommended_milestones)) {
           milestoneContainer.innerHTML = generatedAiData.recommended_milestones.map(m => `
             <div class="milestone-preview-chip">
-              <strong>${m.phase}</strong> ($${Number(m.target_amount).toLocaleString()}): ${m.description}
+              <strong>${escapeHtml(m.phase)}</strong> ($${Number(m.target_amount).toLocaleString()}): ${escapeHtml(m.description)}
             </div>
           `).join('');
         }

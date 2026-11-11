@@ -18,7 +18,8 @@
 
 const config = require('../config/env');
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const geminiUrl = () =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.geminiModel)}:generateContent`;
 
 /**
  * Strips potential markdown code blocks (```json ... ```) from Gemini raw output.
@@ -37,7 +38,7 @@ function cleanJsonMarkdown(text) {
 }
 
 /**
- * Dispatches prompt to Google Gemini 1.5 Flash API with timeout protection.
+ * Dispatches prompt to the configured Gemini model (GEMINI_MODEL, default gemini-2.5-flash) with timeout protection.
  * @param {string} systemInstruction
  * @param {string} userPrompt
  * @param {number} timeoutMs
@@ -55,7 +56,7 @@ async function callGemini(systemInstruction, userPrompt, timeoutMs = 15000) {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${encodeURIComponent(apiKey.trim())}`, {
+    const response = await fetch(`${geminiUrl()}?key=${encodeURIComponent(apiKey.trim())}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -158,7 +159,7 @@ ${notes}
 
     const geminiResult = await callGemini(systemPrompt, userPrompt);
     if (geminiResult && geminiResult.suggested_title && geminiResult.story_content) {
-      return geminiResult;
+      return { ...geminiResult, source: 'gemini' };
     }
 
     // Intelligent Semantic Fallback Engine (Active when API key is unconfigured or offline)
@@ -168,6 +169,7 @@ ${notes}
     const phase2 = target;
 
     return {
+      source: 'fallback', // lets the UI tell the user this is template text, not real AI output
       suggested_title: `Support for ${category} Initiative: ${cleanNotes.substring(0, 45).replace(/\n/g, ' ')}...`,
       short_description: `Join us in supporting ${beneficiary} with urgent ${category.toLowerCase()} funding to achieve lasting community impact.`,
       
@@ -248,7 +250,7 @@ ${story_content}
 
     const geminiResult = await callGemini(systemPrompt, userPrompt);
     if (geminiResult && typeof geminiResult.trust_score === 'number' && geminiResult.credibility_level) {
-      return geminiResult;
+      return { ...geminiResult, source: 'gemini' };
     }
 
     // Intelligent Semantic Fallback Auditor
@@ -297,6 +299,7 @@ ${story_content}
     else if (finalScore < 50) credibilityLevel = 'Review Needed';
 
     return {
+      source: 'fallback',
       trust_score: finalScore,
       credibility_level: credibilityLevel,
       transparency_indicators: {

@@ -213,6 +213,14 @@ class CampaignController {
 
       const updateData = { ...req.body };
 
+      // Protect trust-critical fields: AI scores are set only by the AI audit endpoint,
+      // and only admins may change campaign status (e.g. un-suspend).
+      delete updateData.ai_trust_score;
+      delete updateData.ai_analysis_summary;
+      if (req.user.role !== 'admin') {
+        delete updateData.status;
+      }
+
       if (req.file) {
         updateData.image_url = `/uploads/campaigns/${req.file.filename}`;
       }
@@ -318,5 +326,3 @@ class CampaignController {
 }
 
 module.exports = CampaignController;
-
-

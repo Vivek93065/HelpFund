@@ -1,4 +1,3 @@
-
 /**
  * Cloudflare Workers AI - FLUX.1 Schnell
  * Generates campaign illustrations.
@@ -16,35 +15,34 @@ class ImageGenerationService {
 
     
 
-const prompt = `
-  Create a premium, photorealistic visual for an education
-  crowdfunding campaign website.
+const SCENES = {
+      Education: 'a welcoming classroom or learning space with students reading books and studying together',
+      Medical: 'a calm, caring healthcare setting such as a clinic with a supportive atmosphere (no patients\' faces in focus)',
+      Emergency: 'a community coming together to help after a crisis, volunteers handing out supplies',
+      'Non-Profit': 'volunteers working together on a community service project',
+      Creative: 'a bright creative workspace with art, music or craft materials',
+      Community: 'neighbours working together on a local improvement project in a shared public space'
+    };
+    const scene = SCENES[category] || 'people working together to help their community';
+
+    const prompt = `
+  Create a clean, hopeful illustration-style visual for a crowdfunding campaign website.
 
   Campaign: ${title}
   Category: ${category}
   Details: ${description}
 
-  Show a realistic, welcoming classroom environment with
-  underprivileged school children learning together, reading
-  books and studying with notebooks.
+  Scene: ${scene}.
 
   VISUAL REQUIREMENTS:
-  - Authentic documentary photography.
   - Natural daylight and warm, hopeful atmosphere.
-  - Professional nonprofit campaign photography.
   - Wide horizontal landscape composition.
-  - Children and educational environment clearly visible.
-  - Natural colors, realistic details and textures.
+  - Do not depict any identifiable real person.
 
   STRICTLY AVOID:
   - Any text, typography, letters, numbers or symbols.
-  - Fake writing, gibberish or random characters.
   - Logos, watermarks, signs, labels or branded clothing.
-  - Cartoon, anime, illustration or 3D styles.
-  - Artificial-looking faces or exaggerated expressions.
-
-  The image must be a clean photographic visual only,
-  with absolutely no graphic overlays or text.
+  - Distressing, graphic or exploitative imagery.
 `;
 
 

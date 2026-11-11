@@ -421,11 +421,9 @@
           </label>
         </div>
 
-        <!-- PayPal Sandbox Checkout Action Button -->
-        <button type="button" class="paypal-btn-custom" id="paypal-submit-btn" onclick="executePayPalDonation()">
-          <span style="font-size: 1.25rem;">💳</span>
-          <span>Donate with PayPal Sandbox</span>
-        </button>
+        <!-- PayPal Smart Buttons (rendered by the PayPal JS SDK, sandbox) -->
+        <div id="paypal-button-container" style="min-height: 55px;"></div>
+        <div id="paypal-setup-error" class="alert alert-error" style="display: none;"></div>
 
         <p style="text-align: center; font-size: 0.78rem; color: var(--color-text-muted); margin-top: 0.75rem;">
           🔒 Secured via PayPal Sandbox Orders v2 API & Server-Side Verification.
@@ -504,7 +502,7 @@
         container.innerHTML = `
           <div class="card" style="text-align: center; padding: 4rem;">
             <h2>Campaign Not Found</h2>
-            <p style="color: #ef4444; margin: 1rem 0 1.5rem;">${err.message || 'Unable to retrieve campaign.'}</p>
+            <p style="color: #ef4444; margin: 1rem 0 1.5rem;">${escapeHtml(err.message || 'Unable to retrieve campaign.')}</p>
             <a href="/explore.html" class="btn btn-secondary">Back to Explore</a>
           </div>
         `;
@@ -514,7 +512,7 @@
     function renderCampaignView(c) {
       const container = document.getElementById('campaign-container');
       const bannerHtml = c.image_url 
-        ? `<img src="${c.image_url}" alt="${c.title}" class="campaign-banner-large" onerror="this.outerHTML='<div class=\\'placeholder-banner-large\\'>🤝</div>'">`
+        ? `<img src="${escapeHtml(c.image_url)}" alt="${escapeHtml(c.title)}" class="campaign-banner-large" onerror="this.outerHTML='<div class=\\'placeholder-banner-large\\'>🤝</div>'">`
         : `<div class="placeholder-banner-large">🤝</div>`;
 
       const creatorInitial = (c.creator_name || 'U').charAt(0).toUpperCase();
@@ -528,14 +526,14 @@
       container.innerHTML = `
         <div style="margin-bottom: 1.5rem;">
           <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem;">
-            <span class="badge badge-primary">${c.category}</span>
+            <span class="badge badge-primary">${escapeHtml(c.category)}</span>
             ${trustBadgeTop}
           </div>
           <h1 style="font-size: 2.35rem; font-weight: 800; line-height: 1.25; color: var(--color-text-main); margin-bottom: 0.75rem;">
-            ${c.title}
+            ${escapeHtml(c.title)}
           </h1>
           <p style="font-size: 1.1rem; color: var(--color-text-muted); line-height: 1.6;">
-            ${c.short_description}
+            ${escapeHtml(c.short_description)}
           </p>
         </div>
 
@@ -550,7 +548,7 @@
                 Campaign Story
               </h3>
               <div class="story-content-body">
-                ${c.story_content}
+                ${escapeHtml(c.story_content)}
               </div>
             </div>
 
@@ -558,9 +556,9 @@
             <div class="organizer-card" style="margin-bottom: 2.5rem;">
               <div class="organizer-avatar">${creatorInitial}</div>
               <div>
-                <div style="font-weight: 700; font-size: 1rem;">Created by ${c.creator_name || 'Organizer'}</div>
+                <div style="font-weight: 700; font-size: 1rem;">Created by ${escapeHtml(c.creator_name || 'Organizer')}</div>
                 <div style="font-size: 0.85rem; color: var(--color-text-muted);">
-                  ${c.creator_bio || 'Verified Community Organizer'}
+                  ${escapeHtml(c.creator_bio || 'Verified Community Organizer')}
                 </div>
               </div>
             </div>
@@ -678,17 +676,17 @@
         }
 
         container.innerHTML = donations.map(d => {
-          const initial = d.donor_name.charAt(0).toUpperCase();
+          const initial = escapeHtml(String(d.donor_name || '?').charAt(0).toUpperCase());
           const dateStr = new Date(d.created_at).toLocaleDateString();
           return `
             <div class="donor-card">
               <div class="donor-avatar-circle">${initial}</div>
               <div style="flex:1;">
                 <div style="display:flex; justify-content:space-between;">
-                  <strong>${d.donor_name}</strong>
+                  <strong>${escapeHtml(d.donor_name)}</strong>
                   <span style="font-weight:700; color:var(--color-primary-dark);">$${Number(d.amount).toFixed(2)}</span>
                 </div>
-                ${d.donor_message ? `<p style="font-size:0.88rem; color:var(--color-text-muted); margin-top:0.25rem; font-style:italic;">"${d.donor_message}"</p>` : ''}
+                ${d.donor_message ? `<p style="font-size:0.88rem; color:var(--color-text-muted); margin-top:0.25rem; font-style:italic;">"${escapeHtml(d.donor_message)}"</p>` : ''}
                 <div style="font-size:0.75rem; color:var(--color-text-light); margin-top:0.25rem;">${dateStr}</div>
               </div>
             </div>
@@ -710,6 +708,7 @@
       document.getElementById('donation-success-step').style.display = 'none';
       document.getElementById('donation-alert').style.display = 'none';
       document.getElementById('donation-modal').style.display = 'flex';
+      initPayPalButtons(); // render PayPal buttons once the modal is visible
     }
 
     function closeDonationModal() {
@@ -731,77 +730,100 @@
       });
     }
 
-    /* PayPal Checkout Execution Flow */
-    async function executePayPalDonation() {
+    /* PayPal Checkout: real PayPal Smart Buttons (Orders v2, sandbox).
+       1) createOrder  -> our server creates the order
+       2) buyer approves in the PayPal popup (sandbox buyer account)
+       3) onApprove    -> our server captures + verifies the payment, then updates the campaign */
+    let paypalButtonsRendered = false;
+
+    function showDonationAlert(message, type = 'error') {
       const alertBox = document.getElementById('donation-alert');
-      const submitBtn = document.getElementById('paypal-submit-btn');
-      const message = document.getElementById('donor-message-input').value;
-      const isAnonymous = document.getElementById('anonymous-check').checked;
+      alertBox.className = `alert alert-${type}`;
+      alertBox.textContent = message;
+      alertBox.style.display = 'block';
+    }
 
-      alertBox.style.display = 'none';
+    function showReceipt(receipt) {
+      document.getElementById('donation-form-step').style.display = 'none';
+      document.getElementById('donation-success-step').style.display = 'block';
+      document.getElementById('receipt-amount').textContent = `$${Number(receipt.amount).toFixed(2)} ${receipt.currency}`;
+      document.getElementById('receipt-tx-id').textContent = receipt.capture_id || receipt.order_id;
+      document.getElementById('receipt-summary-text').textContent = `Thank you, ${receipt.donor_name}! Your donation to "${receipt.campaign_title}" has been confirmed.`;
 
-      if (selectedAmount < 1) {
-        alertBox.className = 'alert alert-error';
-        alertBox.textContent = 'Please enter a valid donation amount of at least $1.00 USD.';
-        alertBox.style.display = 'block';
-        return;
-      }
+      // Update campaign numbers on the page immediately
+      currentCampaign.raised_amount = receipt.new_raised_amount;
+      const newPercent = Math.min(100, Math.round((currentCampaign.raised_amount / currentCampaign.target_amount) * 100));
+      currentCampaign.progress_percentage = newPercent;
 
+      const raisedHero = document.getElementById('card-raised-amount');
+      const progressFill = document.getElementById('card-progress-fill');
+      const progressPercent = document.getElementById('card-progress-percent');
+      if (raisedHero) raisedHero.textContent = `$${Number(currentCampaign.raised_amount).toLocaleString()}`;
+      if (progressFill) progressFill.style.width = `${newPercent}%`;
+      if (progressPercent) progressPercent.textContent = `${newPercent}%`;
+
+      loadDonationsList(currentCampaign.id);
+    }
+
+    function loadPayPalSdk(clientId) {
+      return new Promise((resolve, reject) => {
+        if (window.paypal) return resolve();
+        const script = document.createElement('script');
+        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture`;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Could not load the PayPal SDK. Check your internet connection.'));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function initPayPalButtons() {
+      if (paypalButtonsRendered) return;
+      const errorBox = document.getElementById('paypal-setup-error');
       try {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner" style="border-top-color:#000;"></span> Creating PayPal Sandbox Order...';
+        const cfg = await ApiClient.get('/donations/config');
+        const clientId = cfg.config && cfg.config.clientId;
+        if (!clientId || clientId.includes('your_paypal')) {
+          throw new Error('PayPal is not configured on the server (missing PAYPAL_CLIENT_ID in .env).');
+        }
+        await loadPayPalSdk(clientId);
 
-        // Step 1: Create Order on backend
-        const orderRes = await ApiClient.post('/donations/create-order', {
-          campaign_id: currentCampaign.id,
-          amount: selectedAmount,
-          donor_message: message,
-          is_anonymous: isAnonymous
-        });
+        paypal.Buttons({
+          style: { layout: 'vertical', shape: 'rect', label: 'donate' },
 
-        const orderID = orderRes.orderID;
+          createOrder: async () => {
+            document.getElementById('donation-alert').style.display = 'none';
+            if (!selectedAmount || selectedAmount < 1) {
+              throw new Error('Please enter a valid donation amount of at least $1.00 USD.');
+            }
+            const orderRes = await ApiClient.post('/donations/create-order', {
+              campaign_id: currentCampaign.id,
+              amount: selectedAmount
+            });
+            return orderRes.orderID;
+          },
 
-        // Step 2: Capture Payment on backend
-        submitBtn.innerHTML = '<span class="spinner" style="border-top-color:#000;"></span> Capturing & Verifying Payment with PayPal...';
+          onApprove: async (data) => {
+            try {
+              const captureRes = await ApiClient.post('/donations/capture-order', {
+                orderID: data.orderID,
+                campaign_id: currentCampaign.id,
+                donor_message: document.getElementById('donor-message-input').value,
+                is_anonymous: document.getElementById('anonymous-check').checked
+              });
+              showReceipt(captureRes.receipt);
+            } catch (err) {
+              showDonationAlert(err.message || 'Payment could not be verified. You have not been charged twice.');
+            }
+          },
 
-        const captureRes = await ApiClient.post('/donations/capture-order', {
-          orderID,
-          campaign_id: currentCampaign.id,
-          donor_message: message,
-          is_anonymous: isAnonymous
-        });
+          onCancel: () => showDonationAlert('Payment cancelled. You have not been charged.', 'info'),
+          onError: (err) => showDonationAlert((err && err.message) || 'Donation failed. Please try again.')
+        }).render('#paypal-button-container');
 
-        // Step 3: Payment verified! Render Success Receipt
-        const receipt = captureRes.receipt;
-        document.getElementById('donation-form-step').style.display = 'none';
-        document.getElementById('donation-success-step').style.display = 'block';
-        document.getElementById('receipt-amount').textContent = `$${Number(receipt.amount).toFixed(2)} ${receipt.currency}`;
-        document.getElementById('receipt-tx-id').textContent = receipt.capture_id || receipt.order_id;
-        document.getElementById('receipt-summary-text').textContent = `Thank you, ${receipt.donor_name}! Your donation to "${receipt.campaign_title}" has been atomically confirmed.`;
-
-        // Update campaign numbers on the page immediately
-        currentCampaign.raised_amount = receipt.new_raised_amount;
-        const newPercent = Math.min(100, Math.round((currentCampaign.raised_amount / currentCampaign.target_amount) * 100));
-        currentCampaign.progress_percentage = newPercent;
-
-        const raisedHero = document.getElementById('card-raised-amount');
-        const progressFill = document.getElementById('card-progress-fill');
-        const progressPercent = document.getElementById('card-progress-percent');
-
-        if (raisedHero) raisedHero.textContent = `$${Number(currentCampaign.raised_amount).toLocaleString()}`;
-        if (progressFill) progressFill.style.width = `${newPercent}%`;
-        if (progressPercent) progressPercent.textContent = `${newPercent}%`;
-
-        // Refresh community donors ledger
-        loadDonationsList(currentCampaign.id);
-
+        paypalButtonsRendered = true;
       } catch (err) {
-        alertBox.className = 'alert alert-error';
-        alertBox.textContent = err.message || 'Donation failed. Please verify your payment information and try again.';
-        alertBox.style.display = 'block';
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span style="font-size: 1.25rem;">💳</span><span>Donate with PayPal Sandbox</span>';
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
       }
     }
 
@@ -825,6 +847,9 @@
 
         const audit = res.data;
         displayAuditResults(audit);
+        if (audit.source === 'fallback') {
+          alert('Note: the Gemini AI service was unavailable, so this score comes from a simple built-in rule check instead of the AI model.');
+        }
       } catch (err) {
         alert('AI Audit Error: ' + (err.message || 'Failed to complete audit.'));
       } finally {
@@ -859,7 +884,7 @@
           <div style="margin: 0.75rem 0; font-size: 0.9rem;">
             <strong>Credibility Tier:</strong> 
             <span style="font-weight: 700; color: ${audit.trust_score >= 80 ? 'var(--color-primary-dark)' : 'var(--color-accent)'};">
-              ${audit.credibility_level}
+              ${escapeHtml(audit.credibility_level)}
             </span>
           </div>
 
@@ -878,7 +903,7 @@
           <div style="font-size: 0.85rem; margin-top: 0.75rem;">
             <strong>Strengths:</strong>
             <p style="color: var(--color-text-muted); margin-top: 0.2rem;">
-              ${audit.strengths ? audit.strengths.join('. ') : 'Detailed campaign pitch.'}
+              ${escapeHtml(audit.strengths ? audit.strengths.join('. ') : 'Detailed campaign pitch.')}
             </p>
           </div>
 
@@ -886,7 +911,7 @@
             <div style="font-size: 0.85rem; margin-top: 0.75rem;">
               <strong>Actionable Recommendations:</strong>
               <p style="color: var(--color-text-muted); margin-top: 0.2rem;">
-                ${audit.actionable_recommendations.join('. ')}
+                ${escapeHtml(audit.actionable_recommendations.join('. '))}
               </p>
             </div>
           ` : ''}

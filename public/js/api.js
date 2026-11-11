@@ -101,4 +101,17 @@ class ApiClient {
   }
 }
 
+/**
+ * Escapes user-supplied text before it is placed into innerHTML templates (prevents stored XSS).
+ */
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 window.ApiClient = ApiClient;
+window.escapeHtml = escapeHtml;

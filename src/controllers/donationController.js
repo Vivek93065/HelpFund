@@ -132,6 +132,13 @@ class DonationController {
         });
       }
 
+      if (campaign.status === 'suspended') {
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot donate to a suspended campaign.'
+        });
+      }
+
       // 1. Capture Payment directly from PayPal Server
       let captureResult;
       try {

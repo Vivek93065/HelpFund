@@ -209,8 +209,18 @@ async function runTests() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(TEST_ADMIN)
     });
-    const adminRegData = await adminRegRes.json();
+    // Security: self-registering as admin must be rejected (privilege escalation)
+    assert(adminRegRes.status === 400, 'POST /api/auth/register rejects role "admin" with 400 (no self-service admin)');
+
+    // Create the admin the safe way: register as creator, then promote directly in the database
+    const adminRegRes2 = await fetch(`${baseUrl}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...TEST_ADMIN, role: 'creator' })
+    });
+    const adminRegData = await adminRegRes2.json();
     const adminToken = adminRegData.token;
+    db.prepare("UPDATE users SET role = 'admin' WHERE email = ?").run(TEST_ADMIN.email.toLowerCase());
 
     const adminRes = await fetch(`${baseUrl}/api/auth/admin-summary`, {
       headers: { Authorization: `Bearer ${adminToken}` }

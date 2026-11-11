@@ -16,6 +16,11 @@ const dotenv = require('dotenv');
 // Load .env from project root directory
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+const DEV_JWT_SECRET = 'dev_jwt_secret_change_in_production_key_32chars';
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEV_JWT_SECRET)) {
+  throw new Error('JWT_SECRET must be set to a strong random value when NODE_ENV=production.');
+}
+
 const config = {
   // Server Port & Environment
   port: parseInt(process.env.PORT, 10) || 5000,
@@ -27,11 +32,12 @@ const config = {
   dbPath: process.env.DB_PATH || path.resolve(__dirname, '../../data/helpfund.db'),
 
   // JWT Configuration
-  jwtSecret: process.env.JWT_SECRET || 'dev_jwt_secret_change_in_production_key_32chars',
+  jwtSecret: process.env.JWT_SECRET || DEV_JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
 
   // Google Gemini API Configuration
   geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
 
   // Cloudflare Workers AI Configuration
   cloudflare: {

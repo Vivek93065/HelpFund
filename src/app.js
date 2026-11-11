@@ -28,7 +28,10 @@ const app = express();
 // Security HTTP headers
 app.use(
   helmet({
-    contentSecurityPolicy: false // Disabled in development to allow inline CDN scripts if needed
+    contentSecurityPolicy: false, // Disabled in development to allow inline CDN scripts if needed
+    // PayPal Checkout opens a popup window. The default 'same-origin' policy cuts the popup off
+    // from this page (it stays on about:blank), so popups must be allowed.
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
   })
 );
 
