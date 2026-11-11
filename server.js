@@ -10,7 +10,11 @@
 
 const app = require('./src/app');
 const config = require('./src/config/env');
-const { resolvedDbPath } = require('./src/config/db');
+const { initDatabase, resolvedDbPath } = require('./src/config/db');
+
+// Initialize database tables before starting the server
+initDatabase();
+console.log('Database initialized successfully.');
 
 const server = app.listen(config.port, () => {
   console.log('====================================================');

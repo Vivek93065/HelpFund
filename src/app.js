@@ -25,6 +25,9 @@ const donationRoutes = require('./routes/donationRoutes');
 
 const app = express();
 
+// Trust Render's reverse proxy
+app.set('trust proxy', 1);
+
 // Security HTTP headers
 app.use(
   helmet({
