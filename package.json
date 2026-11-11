@@ -1,0 +1,41 @@
+{
+  "name": "helpfund",
+  "version": "1.0.0",
+  "description": "AI-Powered Crowdfunding Platform with Node.js, Express, better-sqlite3, Gemini API, and PayPal Sandbox",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init-db": "node scripts/init-db.js",
+    "test-db": "node scripts/test-db.js",
+    "test-auth": "node tests/auth.test.js",
+    "test-campaigns": "node tests/campaigns.test.js",
+    "test-ai": "node tests/ai.test.js",
+    "test-donations": "node tests/donations.test.js",
+    "test-all": "node tests/auth.test.js && node tests/campaigns.test.js && node tests/ai.test.js && node tests/donations.test.js"
+  },
+  "keywords": [
+    "crowdfunding",
+    "gemini-ai",
+    "paypal-sandbox",
+    "better-sqlite3",
+    "express",
+    "full-stack"
+  ],
+  "author": "HelpFund Team",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore Causes - HelpFund</title>
+
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <style>
+    .explore-header {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(248, 250, 252, 0) 100%);
+      padding: 3.5rem 0 2.5rem;
+      text-align: center;
+    }
+
+    .explore-header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--color-text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .explore-header p {
+      color: var(--color-text-muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    /* Filter & Search Bar Controls */
+    .search-filter-box {
+      max-width: 850px;
+      margin: 0 auto;
+      background: var(--color-surface);
+      padding: 1.25rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .category-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .cat-pill {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .cat-pill:hover, .cat-pill.active {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    /* Campaign Cards Grid */
+    .campaign-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem;
+      padding: 3rem 0;
+    }
+
+    .campaign-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .campaign-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: #cbd5e1;
+    }
+
+    .card-banner {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      display: block;
+    }
+
+    .card-placeholder-banner {
+      width: 100%;
+      height: 190px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 0.5rem;
+      color: var(--color-text-main);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+      margin-bottom: 1.25rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background-color: #e2e8f0;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: 0.85rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), #059669);
+      border-radius: var(--radius-full);
+      transition: width 0.5s ease;
+    }
+
+    .card-metrics {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .metric-raised {
+      font-weight: 700;
+      color: var(--color-primary-dark);
+      font-size: 1rem;
+    }
+
+    .metric-goal {
+      color: var(--color-text-muted);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 5rem 1rem;
+      grid-column: 1 / -1;
+    }
+
+    .empty-state-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="brand-logo">
+        <span class="brand-icon">H</span>
+        <span>Help<span class="brand-highlight">Fund</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/explore.html" class="nav-link active">Explore Causes</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions" id="nav-actions">
+        <!-- Handled dynamically by auth.js -->
+        <a href="/login.html" class="btn btn-secondary">Sign In</a>
+        <a href="/login.html?tab=register" class="btn btn-primary">Start a Campaign</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Explore Header & Filters -->
+  <section class="explore-header">
+    <div class="container">
+      <h1>Discover Meaningful Causes</h1>
+      <p>Browse verified campaigns, support community initiatives, and make a transparent impact.</p>
+
+      <div class="search-filter-box">
+        <div class="search-row">
+          <input 
+            type="text" 
+            id="search-input" 
+            class="form-control" 
+            placeholder="🔍 Search campaigns by title, medical need, school, community..."
+          >
+          <select id="sort-select" class="form-control" style="max-width: 180px;">
+            <option value="newest">Newest First</option>
+            <option value="most_funded">Most Funded</option>
+            <option value="urgent">Expiring Soon</option>
+            <option value="target">Highest Goal</option>
+          </select>
+        </div>
+
+        <div class="category-pills" id="category-pills">
+          <button class="cat-pill active" data-category="All">All Causes</button>
+          <button class="cat-pill" data-category="Medical">Medical</button>
+          <button class="cat-pill" data-category="Education">Education</button>
+          <button class="cat-pill" data-category="Emergency">Emergency</button>
+          <button class="cat-pill" data-category="Non-Profit">Non-Profit</button>
+          <button class="cat-pill" data-category="Creative">Creative</button>
+          <button class="cat-pill" data-category="Community">Community</button>
+          <button class="cat-pill" data-category="Other">Other</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Campaign Cards Grid Container -->
+  <main class="container">
+    <div id="campaign-grid" class="campaign-grid">
+      <div class="empty-state">
+        <div class="spinner" style="border-top-color: var(--color-primary); width: 2.5rem; height: 2.5rem;"></div>
+        <p style="margin-top: 1rem; color: var(--color-text-muted);">Loading campaigns...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 HelpFund. AI-Powered Crowdfunding Platform.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    let activeCategory = 'All';
+    let searchQuery = '';
+    let sortOrder = 'newest';
+    let debounceTimer = null;
+
+    async function loadCampaigns() {
+      const grid = document.getElementById('campaign-grid');
+      
+      try {
+        const queryParams = new URLSearchParams({
+          category: activeCategory,
+          search: searchQuery,
+          sort: sortOrder,
+          limit: 24
+        });
+
+        const res = await ApiClient.get(`/campaigns?${queryParams.toString()}`);
+        const campaigns = res.data || [];
+
+        if (campaigns.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🌱</div>
+              <h3>No campaigns found</h3>
+              <p style="color: var(--color-text-muted); margin-top: 0.5rem;">
+                Try adjusting your search terms or selecting a different category.
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = campaigns.map(c => {
+          const bannerHtml = c.image_url 
+            ? `<img src="${c.image_url}" alt="${c.title}" class="card-banner" onerror="this.outerHTML='<div class=\\'card-placeholder-banner\\'>🤝</div>'">`
+            : `<div class="card-placeholder-banner">🤝</div>`;
+
+          return `
+            <a href="/campaign-detail.html?id=${c.id}" class="campaign-card">
+              ${bannerHtml}
+              <div class="card-body">
+                <div class="card-meta">
+                  <span class="badge badge-primary">${c.category}</span>
+                  <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted);">
+                    ${c.days_left > 0 ? `${c.days_left} days left` : 'Finished'}
+                  </span>
+                </div>
+
+                <h3 class="card-title">${c.title}</h3>
+                <p class="card-desc">${c.short_description}</p>
+
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: ${c.progress_percentage}%"></div>
+                </div>
+
+                <div class="card-metrics">
+                  <div>
+                    <div class="metric-raised">$${Number(c.raised_amount).toLocaleString()}</div>
+                    <div class="metric-goal">raised of $${Number(c.target_amount).toLocaleString()}</div>
+                  </div>
+                  <div style="font-weight: 700; color: var(--color-primary);">
+                    ${c.progress_percentage}%
+                  </div>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h3>Failed to load campaigns</h3>
+            <p style="color: #ef4444; margin-top: 0.5rem;">${err.message || 'Error communicating with server.'}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Category Pill Event Listeners
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        activeCategory = e.target.getAttribute('data-category');
+        loadCampaigns();
+      });
+    });
+
+    // Debounced Search Input
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        searchQuery = e.target.value.trim();
+        loadCampaigns();
+      }, 350);
+    });
+
+    // Sort Dropdown
+    document.getElementById('sort-select').addEventListener('change', (e) => {
+      sortOrder = e.target.value;
+      loadCampaigns();
+    });
+
+    // Initial Load
+    document.addEventListener('DOMContentLoaded', loadCampaigns);
+  </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HelpFund - AI-Powered Crowdfunding Platform</title>
+
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <style>
+    .hero-section {
+      padding: 5rem 0 4rem;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(248, 250, 252, 0) 100%);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: var(--color-primary-light);
+      color: var(--color-primary-dark);
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--color-text-main);
+      max-width: 800px;
+      margin: 0 auto 1.25rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: var(--color-text-muted);
+      max-width: 650px;
+      margin: 0 auto 2.25rem;
+      line-height: 1.6;
+    }
+
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      padding: 4rem 0;
+    }
+
+    .feature-card {
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .feature-icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: var(--radius-md);
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      color: var(--color-text-muted);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="brand-logo">
+        <span class="brand-icon">H</span>
+        <span>Help<span class="brand-highlight">Fund</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link active">Home</a></li>
+          <li><a href="/explore.html" class="nav-link">Explore Causes</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions" id="nav-actions">
+        <!-- Injected dynamically via auth.js -->
+        <a href="/login.html" class="btn btn-secondary">Sign In</a>
+        <a href="/login.html?tab=register" class="btn btn-primary">Start a Campaign</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero-section">
+      <div class="container">
+        <div class="hero-badge">
+          ✨ Powered by Google Gemini AI & PayPal Sandbox
+        </div>
+        <h1 class="hero-title">Empowering Communities Through Transparent Crowdfunding</h1>
+        <p class="hero-subtitle">
+          HelpFund combines artificial intelligence with verified micro-donations to turn ideas and emergency needs into funded realities.
+        </p>
+        <div class="hero-cta">
+          <a href="/login.html?tab=register" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;">
+            Start a Campaign Free
+          </a>
+          <a href="/explore.html" class="btn btn-secondary" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;">
+            Browse Campaigns
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Highlights Grid -->
+    <section class="container">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI Campaign Assistant</h3>
+          <p>Gemini AI helps fundraisers draft compelling, empathetic, and clear campaign pitches with realistic funding milestones.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>AI Trust & Credibility Scorer</h3>
+          <p>Automated semantic checks evaluate transparency and verifiability to assign a visible Trust Badge for donor confidence.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💳</div>
+          <h3>PayPal Sandbox Verified</h3>
+          <p>Enterprise server-side payment capture ensures every single dollar is atomically tracked and validated.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 HelpFund. Designed for College Project Showcase & Production Architecture.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

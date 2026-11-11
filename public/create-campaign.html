@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start a Campaign - HelpFund</title>
+
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <style>
+    .form-container {
+      max-width: 760px;
+      margin: 3rem auto 4rem;
+    }
+
+    .form-header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .form-header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--color-text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+      color: var(--color-text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Image Upload Dropzone */
+    .dropzone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      background: var(--color-surface-hover);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .dropzone:hover {
+      border-color: var(--color-primary);
+      background: rgba(16, 185, 129, 0.04);
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: var(--radius-md);
+      display: none;
+      margin: 0 auto;
+      object-fit: cover;
+    }
+
+    .ai-assist-box {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.08));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .ai-assist-info h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ai-assist-info p {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* AI Modal Dialog */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--color-border);
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 1rem;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--color-text-muted);
+    }
+
+    .milestone-preview-chip {
+      background: var(--color-surface-hover);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 0.85rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="brand-logo">
+        <span class="brand-icon">H</span>
+        <span>Help<span class="brand-highlight">Fund</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/explore.html" class="nav-link">Explore Causes</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions" id="nav-actions">
+        <!-- Managed by auth.js -->
+        <a href="/login.html" class="btn btn-secondary">Sign In</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Campaign Form Container -->
+  <main class="container">
+    <div class="form-container">
+      
+      <div class="form-header">
+        <h1>Launch Your Campaign</h1>
+        <p>Tell your story, set your goal, and invite backers worldwide to support your cause.</p>
+      </div>
+
+      <!-- Auth Protection Notice (if not logged in) -->
+      <div id="auth-warning" class="alert alert-error" style="display: none;">
+        <span>You must be signed in to create a campaign.</span>
+        <a href="/login.html" class="btn btn-secondary" style="margin-left: auto; padding: 0.35rem 0.85rem; font-size: 0.85rem;">Sign In Now</a>
+      </div>
+
+      <div class="card card-elevated" id="campaign-form-card">
+        
+        <!-- Gemini AI Assistant Banner -->
+        <div class="ai-assist-box">
+          <div class="ai-assist-info">
+            <h4>✨ Gemini AI Story Assistant</h4>
+            <p>Stuck on writing? Enter your rough notes and let Gemini draft an empathetic, structured pitch.</p>
+          </div>
+          <button type="button" id="ai-enhance-btn" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.55rem 1.1rem;" onclick="openAiModal()">
+            ✨ Draft with Gemini AI
+          </button>
+        </div>
+
+        <div id="alert-box" style="display: none;"></div>
+
+        <form id="create-campaign-form">
+          
+          <!-- Banner Image Upload -->
+          <div class="form-group">
+            <label class="form-label">Campaign Banner Image</label>
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('banner-file').click()">
+              <input type="file" id="banner-file" name="banner_image" accept="image/jpeg,image/png,image/webp" style="display: none;">
+              <div id="dropzone-prompt">
+                <div style="font-size: 2.25rem; margin-bottom: 0.5rem;">📸</div>
+                <div style="font-weight: 600; font-size: 0.95rem;">Click or drag an image here to upload</div>
+                <div class="form-hint">Supports JPEG, PNG, or WEBP (Max 5MB)</div>
+              </div>
+              <img id="image-preview" class="preview-image" alt="Banner Preview">
+            </div>
+          </div>
+
+          <!-- Campaign Title -->
+          <div class="form-group">
+            <label class="form-label" for="campaign-title">Campaign Title *</label>
+            <input 
+              type="text" 
+              id="campaign-title" 
+              name="title" 
+              class="form-control" 
+              placeholder="e.g. Urgent Tuition Support for First-Generation Engineering Student" 
+              required 
+              minlength="5"
+            >
+            <p class="form-hint">Make it transparent, clear, and action-oriented.</p>
+          </div>
+
+          <!-- Category & Goal Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            
+            <div class="form-group">
+              <label class="form-label" for="campaign-category">Category *</label>
+              <select id="campaign-category" name="category" class="form-control" required>
+                <option value="">Select a category</option>
+                <option value="Medical">Medical</option>
+                <option value="Education">Education</option>
+                <option value="Emergency">Emergency</option>
+                <option value="Non-Profit">Non-Profit</option>
+                <option value="Creative">Creative</option>
+                <option value="Community">Community</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="campaign-target">Target Goal Amount ($ USD) *</label>
+              <input 
+                type="number" 
+                id="campaign-target" 
+                name="target_amount" 
+                class="form-control" 
+                placeholder="5000" 
+                required 
+                min="1" 
+                step="0.01"
+              >
+            </div>
+
+          </div>
+
+          <!-- Deadline Date -->
+          <div class="form-group">
+            <label class="form-label" for="campaign-deadline">Funding Deadline Date *</label>
+            <input 
+              type="date" 
+              id="campaign-deadline" 
+              name="deadline" 
+              class="form-control" 
+              required
+            >
+            <p class="form-hint">Recommended campaign length: 30 to 60 days.</p>
+          </div>
+
+          <!-- Short Description -->
+          <div class="form-group">
+            <label class="form-label" for="campaign-short-desc">Short Summary / Pitch *</label>
+            <textarea 
+              id="campaign-short-desc" 
+              name="short_description" 
+              class="form-control" 
+              rows="2" 
+              placeholder="A 1-2 sentence summary that appears on social media and explore cards..." 
+              required 
+              minlength="10" 
+              maxlength="300"
+            ></textarea>
+          </div>
+
+          <!-- Full Story -->
+          <div class="form-group">
+            <label class="form-label" for="campaign-story">Full Campaign Story *</label>
+            <textarea 
+              id="campaign-story" 
+              name="story_content" 
+              class="form-control" 
+              rows="7" 
+              placeholder="Describe who you are, why you need support, how the funds will be allocated, and any verifiable details..." 
+              required 
+              minlength="20"
+            ></textarea>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-primary btn-block" style="padding: 0.85rem; font-size: 1.05rem; margin-top: 1.5rem;">
+            <span>Publish Campaign</span>
+          </button>
+
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Interactive Gemini AI Assistant Modal -->
+  <div class="modal-overlay" id="ai-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.25rem; font-weight: 700;">✨ Gemini AI Campaign Assistant</h3>
+        <button type="button" class="modal-close-btn" onclick="closeAiModal()">&times;</button>
+      </div>
+
+      <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">
+        Paste your rough notes, bullet points, or thoughts. Gemini will organize them into an engaging, empathetic pitch with suggested funding milestones.
+      </p>
+
+      <div id="ai-modal-alert" style="display: none;"></div>
+
+      <div class="form-group">
+        <label class="form-label">Rough Notes & Key Details *</label>
+        <textarea 
+          id="ai-notes-input" 
+          class="form-control" 
+          rows="4" 
+          placeholder="e.g. Need $4500 for laboratory equipment and textbooks for 35 low-income high school science students. Equipment includes microscopes and test kits."
+        ></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Beneficiary (Who benefits?)</label>
+          <input type="text" id="ai-beneficiary-input" class="form-control" placeholder="e.g. Local students / My family">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Estimated Goal ($)</label>
+          <input type="number" id="ai-goal-input" class="form-control" placeholder="5000">
+        </div>
+      </div>
+
+      <button type="button" id="ai-generate-submit-btn" class="btn btn-primary btn-block" onclick="generateAiProposal()">
+        <span>✨ Generate Proposal with Gemini</span>
+      </button>
+
+      <!-- AI Generated Preview Section (Hidden until generated) -->
+      <div id="ai-output-section" style="display: none; margin-top: 1.75rem; border-top: 1px solid var(--color-border); padding-top: 1.25rem;">
+        <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--color-primary-dark);">
+          Generated Proposal Preview:
+        </h4>
+
+        <div class="form-group">
+          <label class="form-label">Suggested Title</label>
+          <input type="text" id="ai-preview-title" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Summary Hook</label>
+          <textarea id="ai-preview-summary" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Structured Story Narrative</label>
+          <textarea id="ai-preview-story" class="form-control" rows="6"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Recommended Funding Milestones</label>
+          <div id="ai-milestones-container"></div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block" style="margin-top: 1rem;" onclick="applyAiProposalToForm()">
+          ✓ Apply to Campaign Form & Review
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 HelpFund. AI-Powered Crowdfunding Platform.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // Enforce default min date for deadline picker (tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('campaign-deadline').min = tomorrow.toISOString().split('T')[0];
+
+    // Check login state
+    if (!Auth.isLoggedIn()) {
+      document.getElementById('auth-warning').style.display = 'flex';
+      document.getElementById('submit-btn').disabled = true;
+      document.getElementById('submit-btn').innerHTML = 'Please Sign In First';
+    }
+
+    // Banner image preview
+    const fileInput = document.getElementById('banner-file');
+    const preview = document.getElementById('image-preview');
+    const prompt = document.getElementById('dropzone-prompt');
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          preview.src = event.target.result;
+          preview.style.display = 'block';
+          prompt.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Alert functions
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alert-box');
+      box.className = `alert alert-${type}`;
+      box.textContent = msg;
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function clearAlert() {
+      const box = document.getElementById('alert-box');
+      box.style.display = 'none';
+    }
+
+    // AI Modal Controls
+    function openAiModal() {
+      if (!Auth.isLoggedIn()) {
+        showAlert('Please sign in before using the Gemini AI Story Assistant.');
+        return;
+      }
+      document.getElementById('ai-modal').style.display = 'flex';
+      // Pre-fill goal from main form if entered
+      const currentGoal = document.getElementById('campaign-target').value;
+      if (currentGoal) {
+        document.getElementById('ai-goal-input').value = currentGoal;
+      }
+    }
+
+    function closeAiModal() {
+      document.getElementById('ai-modal').style.display = 'none';
+    }
+
+    let generatedAiData = null;
+
+    async function generateAiProposal() {
+      const notes = document.getElementById('ai-notes-input').value.trim();
+      const beneficiary = document.getElementById('ai-beneficiary-input').value.trim();
+      const goal = document.getElementById('ai-goal-input').value;
+      const category = document.getElementById('campaign-category').value || 'Community';
+      const alertBox = document.getElementById('ai-modal-alert');
+      const btn = document.getElementById('ai-generate-submit-btn');
+
+      alertBox.style.display = 'none';
+
+      if (notes.length < 10) {
+        alertBox.className = 'alert alert-error';
+        alertBox.textContent = 'Please enter at least 10 characters of rough notes.';
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Generating with Gemini AI...';
+
+        const res = await ApiClient.post('/ai/generate-story', {
+          notes,
+          category,
+          target_amount: parseFloat(goal) || 5000,
+          beneficiary
+        });
+
+        generatedAiData = res.data;
+
+        // Render preview fields
+        document.getElementById('ai-preview-title').value = generatedAiData.suggested_title || '';
+        document.getElementById('ai-preview-summary').value = generatedAiData.short_description || '';
+        document.getElementById('ai-preview-story').value = generatedAiData.story_content || '';
+
+        const milestoneContainer = document.getElementById('ai-milestones-container');
+        if (Array.isArray(generatedAiData.recommended_milestones)) {
+          milestoneContainer.innerHTML = generatedAiData.recommended_milestones.map(m => `
+            <div class="milestone-preview-chip">
+              <strong>${m.phase}</strong> ($${Number(m.target_amount).toLocaleString()}): ${m.description}
+            </div>
+          `).join('');
+        }
+
+        document.getElementById('ai-output-section').style.display = 'block';
+      } catch (err) {
+        alertBox.className = 'alert alert-error';
+        alertBox.textContent = err.message || 'AI proposal generation failed. Please try again.';
+        alertBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>✨ Generate Proposal with Gemini</span>';
+      }
+    }
+
+    function applyAiProposalToForm() {
+      if (!generatedAiData) return;
+
+      document.getElementById('campaign-title').value = document.getElementById('ai-preview-title').value;
+      document.getElementById('campaign-short-desc').value = document.getElementById('ai-preview-summary').value;
+      document.getElementById('campaign-story').value = document.getElementById('ai-preview-story').value;
+
+      const goalVal = document.getElementById('ai-goal-input').value;
+      if (goalVal && !document.getElementById('campaign-target').value) {
+        document.getElementById('campaign-target').value = goalVal;
+      }
+
+      closeAiModal();
+      showAlert('✨ Gemini AI proposal applied! You can now review, edit, and publish your campaign.', 'success');
+    }
+
+    // Main Form Submission
+    document.getElementById('create-campaign-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlert();
+
+      if (!Auth.isLoggedIn()) {
+        showAlert('You must be signed in to publish a campaign.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      const form = document.getElementById('create-campaign-form');
+      const formData = new FormData(form);
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Publishing Campaign...';
+
+        const token = ApiClient.getToken();
+        const response = await fetch('/api/campaigns', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errMessage = data.error || (data.errors ? data.errors.join('. ') : 'Failed to create campaign.');
+          throw new Error(errMessage);
+        }
+
+        showAlert('Campaign published successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = `/campaign-detail.html?id=${data.campaign.id}`;
+        }, 1000);
+
+      } catch (err) {
+        showAlert(err.message || 'An error occurred while creating the campaign.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Publish Campaign</span>';
+      }
+    });
+  </script>
+</body>
+</html>
