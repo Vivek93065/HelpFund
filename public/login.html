@@ -268,7 +268,8 @@
       switchTab('register');
     }
 
-    const redirectTarget = urlParams.get('redirect') || '/dashboard.html';
+    const requestedRedirect = urlParams.get('redirect') || '';
+    const redirectTarget = /^\/(?![\/\\])/.test(requestedRedirect) ? requestedRedirect : '/dashboard.html';
 
     // Handle Login Submit
     document.getElementById('login-form').addEventListener('submit', async (e) => {

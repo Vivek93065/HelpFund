@@ -79,6 +79,8 @@ class ImageGenerationService {
               source: 'cloudflare'
             };
           }
+        } else {
+          console.warn(`[ImageGenerationService] Cloudflare HTTP ${response.status}: ${(await response.text()).substring(0, 200)}`);
         }
       } catch (cfErr) {
         console.warn(`[ImageGenerationService] Cloudflare Workers AI attempt skipped: ${cfErr.message}`);
@@ -116,6 +118,8 @@ class ImageGenerationService {
               source: 'imagen'
             };
           }
+        } else {
+          console.warn(`[ImageGenerationService] Imagen HTTP ${imagenRes.status} (Imagen usually needs a paid Gemini key)`);
         }
       } catch (imagenErr) {
         console.warn(`[ImageGenerationService] Google Imagen 3 attempt skipped: ${imagenErr.message}`);
@@ -125,30 +129,38 @@ class ImageGenerationService {
     // ----------------------------------------------------
     // Tier 3: Zero-Config Serverless AI (Pollinations FLUX)
     // ----------------------------------------------------
-    try {
-      const seed = Math.floor(Math.random() * 999999);
-      const encodedPrompt = encodeURIComponent(
-        `cinematic illustration ${safeCategory} ${title.substring(0, 40)}, warm light, high resolution, award winning, 16:9`
-      );
-      const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=640&nologo=true&seed=${seed}&model=flux`;
+    // Prompt = scene for the category + campaign title + start of the story, so the picture matches the cause.
+    const storySnippet = (description || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+    const pollPrompt =
+      `${scene}. Campaign: ${title.substring(0, 80)}. ${storySnippet}. ` +
+      `Warm natural light, hopeful, realistic photo style, wide landscape, no text, no logos`;
 
-      const pollRes = await fetch(pollUrl, {
-        signal: AbortSignal.timeout(25000)
-      });
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const seed = Math.floor(Math.random() * 999999);
+        const pollUrl =
+          `https://image.pollinations.ai/prompt/${encodeURIComponent(pollPrompt)}` +
+          `?width=1024&height=640&nologo=true&seed=${seed}&model=flux`;
 
-      if (pollRes.ok) {
-        const arrayBuffer = await pollRes.arrayBuffer();
-        if (arrayBuffer && arrayBuffer.byteLength > 1000) {
-          const base64 = Buffer.from(arrayBuffer).toString('base64');
-          return {
-            image: base64,
-            mimeType: 'image/jpeg',
-            source: 'pollinations'
-          };
+        const pollRes = await fetch(pollUrl, { signal: AbortSignal.timeout(25000) });
+
+        if (pollRes.ok) {
+          const arrayBuffer = await pollRes.arrayBuffer();
+          if (arrayBuffer && arrayBuffer.byteLength > 5000) {
+            return {
+              image: Buffer.from(arrayBuffer).toString('base64'),
+              mimeType: 'image/jpeg',
+              source: 'pollinations'
+            };
+          }
+          console.warn(`[ImageGenerationService] Pollinations attempt ${attempt}: image too small, retrying.`);
+        } else {
+          console.warn(`[ImageGenerationService] Pollinations attempt ${attempt}: HTTP ${pollRes.status}`);
         }
+      } catch (pollErr) {
+        console.warn(`[ImageGenerationService] Pollinations attempt ${attempt} failed: ${pollErr.message}`);
       }
-    } catch (pollErr) {
-      console.warn(`[ImageGenerationService] Pollinations FLUX attempt skipped: ${pollErr.message}`);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500));
     }
 
     // ----------------------------------------------------
@@ -181,13 +193,10 @@ class ImageGenerationService {
       console.warn(`[ImageGenerationService] Preset fetch skipped: ${presetErr.message}`);
     }
 
-    // 100% Offline Minimal Valid JPEG
-    const fallbackJpegB64 = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
-    return {
-      image: fallbackJpegB64,
-      mimeType: 'image/jpeg',
-      source: 'offline-fallback'
-    };
+    // Every source failed. Do NOT return a blank placeholder: tell the user clearly instead.
+    const unavailable = new Error('AI image service is busy right now. Please click "Regenerate" in a few seconds, or upload your own banner image.');
+    unavailable.code = 'IMAGE_UNAVAILABLE';
+    throw unavailable;
   }
 }
 

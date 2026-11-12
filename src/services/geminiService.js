@@ -18,8 +18,8 @@
 
 const config = require('../config/env');
 
-const geminiUrl = () =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.geminiModel)}:generateContent`;
+const geminiUrl = (model) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
 /**
  * Strips potential markdown code blocks (```json ... ```) from Gemini raw output.
@@ -37,73 +37,129 @@ function cleanJsonMarkdown(text) {
   return cleaned.trim();
 }
 
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
- * Dispatches prompt to the configured Gemini model (GEMINI_MODEL, default gemini-2.5-flash) with timeout protection.
- * @param {string} systemInstruction
- * @param {string} userPrompt
- * @param {number} timeoutMs
- * @returns {Promise<object>}
+ * Models to try, in order: the configured model first, then fallbacks.
+ * Gemini returns 503 ("model overloaded") often, so having backups matters.
  */
-async function callGemini(systemInstruction, userPrompt, timeoutMs = 15000) {
-  const apiKey = config.geminiApiKey;
+function modelChain() {
+  const chain = [config.geminiModel, ...(config.geminiFallbackModels || [])];
+  return chain.filter((m, i) => m && chain.indexOf(m) === i);
+}
 
-  // If no API key is provided or it's the template placeholder, return null to trigger intelligent fallback
-  if (!apiKey || apiKey.trim() === '' || apiKey.includes('your_gemini_api_key')) {
-    return null;
-  }
-
+/**
+ * Sends one request to one Gemini model.
+ * Returns { ok, status, parsed, retryable, fatal } and never throws.
+ */
+async function requestGeminiModel(model, apiKey, body, timeoutMs) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
   try {
-    const response = await fetch(`${geminiUrl()}?key=${encodeURIComponent(apiKey.trim())}`, {
+    const response = await fetch(`${geminiUrl(model)}?key=${encodeURIComponent(apiKey)}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `${systemInstruction}\n\nUser Input Data:\n${userPrompt}\n\nIMPORTANT: Respond ONLY with valid, raw JSON. Do not wrap in conversational text.`
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 2048,
-          responseMimeType: 'application/json'
-        }
-      })
+      body
     });
-
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn(`[Gemini API Warning] HTTP ${response.status}: ${errorText.substring(0, 200)}`);
-      return null;
+      console.warn(`[Gemini] ${model} -> HTTP ${response.status}: ${errorText.substring(0, 160)}`);
+      return {
+        ok: false,
+        status: response.status,
+        retryable: RETRYABLE_STATUS.has(response.status),
+        // 401/403 = bad key: no other model will work either
+        fatal: response.status === 401 || response.status === 403
+      };
     }
 
     const data = await response.json();
     const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!candidateText) {
-      return null;
+      console.warn(`[Gemini] ${model} returned no text (finish: ${data?.candidates?.[0]?.finishReason || 'unknown'}).`);
+      return { ok: false, status: 200, retryable: true };
     }
 
-    return JSON.parse(cleanJsonMarkdown(candidateText));
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      console.warn('[Gemini API Warning] Request timed out. Using semantic fallback engine.');
-    } else {
-      console.warn(`[Gemini API Warning] ${err.message}. Using semantic fallback engine.`);
+    try {
+      return { ok: true, status: 200, parsed: JSON.parse(cleanJsonMarkdown(candidateText)) };
+    } catch (parseErr) {
+      console.warn(`[Gemini] ${model} returned invalid/truncated JSON.`);
+      return { ok: false, status: 200, retryable: true };
     }
+  } catch (err) {
+    const reason = err.name === 'AbortError' ? 'timed out' : err.message;
+    console.warn(`[Gemini] ${model} request ${reason}.`);
+    return { ok: false, status: 0, retryable: true };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Calls Gemini with retries + model fallback.
+ *  - 503/429/5xx/timeouts: retry the same model with exponential backoff (2 attempts)
+ *  - still failing, or model name invalid (400/404): move to the next fallback model
+ *  - bad API key (401/403): stop immediately
+ * Returns parsed JSON, or null so callers can use their built-in fallback.
+ *
+ * @param {string} systemInstruction
+ * @param {string} userPrompt
+ * @param {number} timeoutMs - per-request timeout
+ * @returns {Promise<object|null>}
+ */
+async function callGemini(systemInstruction, userPrompt, timeoutMs = 20000) {
+  const apiKey = config.geminiApiKey;
+
+  // No key configured: let the caller use its fallback engine
+  if (!apiKey || apiKey.trim() === '' || apiKey.includes('your_gemini_api_key')) {
     return null;
   }
+
+  const body = JSON.stringify({
+    contents: [
+      {
+        parts: [
+          {
+            text: `${systemInstruction}\n\nUser Input Data:\n${userPrompt}\n\nIMPORTANT: Respond ONLY with valid, raw JSON. Do not wrap in conversational text.`
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      // Generous limit: thinking-capable models count reasoning tokens here too,
+      // and a too-small limit truncates the JSON.
+      maxOutputTokens: 8192,
+      responseMimeType: 'application/json'
+    }
+  });
+
+  const MAX_ATTEMPTS_PER_MODEL = 2;
+  const overallDeadline = Date.now() + 45000; // keep the user's wait bounded
+
+  for (const model of modelChain()) {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
+      if (Date.now() > overallDeadline) {
+        console.warn('[Gemini] Overall time budget used up. Using fallback engine.');
+        return null;
+      }
+
+      const result = await requestGeminiModel(model, apiKey.trim(), body, timeoutMs);
+      if (result.ok) return result.parsed;
+      if (result.fatal) return null;
+      if (!result.retryable) break; // e.g. 400/404 -> try the next model
+
+      if (attempt < MAX_ATTEMPTS_PER_MODEL) {
+        await sleep(800 * attempt + Math.floor(Math.random() * 400));
+      }
+    }
+  }
+
+  console.warn('[Gemini] All models/attempts failed. Using fallback engine.');
+  return null;
 }
 
 class GeminiService {

@@ -117,22 +117,19 @@ class AiController {
         });
       }
 
-      if (
-        title.trim().length < 5 ||
-        title.length > 150 ||
-        description.trim().length < 10 ||
-        description.length > 1000
-      ) {
+      if (title.trim().length < 5 || description.trim().length < 10) {
         return res.status(400).json({
           success: false,
-          error: 'Please provide valid campaign details.'
+          error: 'Please enter a title (5+ characters) and a description (10+ characters).'
         });
       }
 
+      // Long stories are fine: only the first part is needed to describe the scene,
+      // so trim instead of rejecting.
       const imageResult = await ImageGenerationService.generateCampaignImage({
-        title: title.trim(),
+        title: title.trim().slice(0, 150),
         category: category.trim(),
-        description: description.trim()
+        description: description.trim().slice(0, 600)
       });
 
       const image = typeof imageResult === 'object' ? imageResult.image : imageResult;
@@ -148,6 +145,9 @@ class AiController {
         }
       });
     } catch (error) {
+      if (error.code === 'IMAGE_UNAVAILABLE') {
+        return res.status(503).json({ success: false, error: error.message });
+      }
       next(error);
     }
   }

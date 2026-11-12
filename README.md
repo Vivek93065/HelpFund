@@ -9,7 +9,7 @@
 [![PayPal](https://img.shields.io/badge/PayPal-Orders%20v2%20Sandbox-003087?logo=paypal)](https://developer.paypal.com)
 [![Hosted on Render](https://img.shields.io/badge/Hosted%20on-Render-46E3B7?logo=render)](https://helpfund.onrender.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/Tests-75%20Passing-brightgreen.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-80%20Passing-brightgreen.svg)](tests/)
 
 ---
 
@@ -133,8 +133,8 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
 3. Select an amount ($10, $25, $50, $100) or enter a custom value — observe the **Gemini AI Impact Prediction** calculate live.
 4. Click the yellow **PayPal** button.
 5. In the PayPal sandbox popup, log in with any personal PayPal Sandbox buyer account or test credentials:
-   - **Buyer Email**: `buyer@helpfund-sandbox.com` (or your personal PayPal developer sandbox account)
-   - **Password**: Any valid sandbox password
+   - **Buyer Email**: `sb-eh47zn53855736@personal.example.com` (or your personal PayPal developer sandbox account)
+   - **Password**: viduship
 6. Complete the approval. HelpFund captures the payment server-side, updates the campaign balance atomically, and generates a verified PayPal transaction receipt!
 
 ---
@@ -173,7 +173,8 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
    
    # Google Gemini API Key (Get free from https://aistudio.google.com/)
    GEMINI_API_KEY=your_gemini_api_key_here
-   GEMINI_MODEL=gemini-2.5-flash
+   GEMINI_MODEL=gemini-3.5-flash-lite
+   GEMINI_FALLBACK_MODELS=gemini-3.1-flash-lite,gemini-flash-lite-latest,gemini-3.5-flash
    
    # PayPal Sandbox Credentials (Get from https://developer.paypal.com/dashboard/)
    PAYPAL_CLIENT_ID=your_paypal_sandbox_client_id_here
@@ -197,7 +198,7 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
 
 ---
 
-## 🧪 Automated Test Suite (75 Tests Passing)
+## 🧪 Automated Test Suite (80 Tests Passing)
 
 HelpFund includes a comprehensive automated test suite testing auth, campaigns, Gemini AI, and PayPal Sandbox payments offline:
 

@@ -38,6 +38,9 @@ const config = {
   // Google Gemini API Configuration
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
+  // Backups tried in order when the main model returns 503 (overloaded) or 429
+  geminiFallbackModels: (process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.1-flash-lite,gemini-flash-lite-latest,gemini-3.5-flash')
+    .split(',').map((m) => m.trim()).filter(Boolean),
 
   // Cloudflare Workers AI Configuration
   cloudflare: {
