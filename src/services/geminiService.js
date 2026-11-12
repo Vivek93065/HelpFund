@@ -1,14 +1,14 @@
 /**
  * src/services/geminiService.js
- * 
+ *
  * Google Gemini AI Service Adapter
- * 
+ *
  * Capabilities:
  * 1. AI Campaign Story Assistant: Transforms rough fundraiser notes into engaging,
  *    transparent, empathetic pitches with milestone breakdowns.
  * 2. AI Trust & Credibility Analyzer: Evaluates campaign descriptions for budget
  *    transparency, realistic timelines, and verifiable milestones (assigns 0-100 score).
- * 
+ *
  * Architecture & Reliability:
  * - Uses native Node.js 22 fetch() with AbortController for network timeout protection.
  * - Enforces structured JSON output parsing with markdown codeblock stripping.
@@ -138,7 +138,7 @@ async function callGemini(systemInstruction, userPrompt, timeoutMs = 20000) {
   });
 
   const MAX_ATTEMPTS_PER_MODEL = 2;
-  const overallDeadline = Date.now() + 45000; // keep the user's wait bounded
+  const overallDeadline = Date.now() + 90000; // keep the user's wait bounded
 
   for (const model of modelChain()) {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
@@ -150,7 +150,10 @@ async function callGemini(systemInstruction, userPrompt, timeoutMs = 20000) {
       const result = await requestGeminiModel(model, apiKey.trim(), body, timeoutMs);
       if (result.ok) return result.parsed;
       if (result.fatal) return null;
-      if (!result.retryable) break; // e.g. 400/404 -> try the next model
+      // Move to the next model immediately on overload or timeout.
+      if (!result.retryable || result.status === 503 || result.status === 0) {
+        break;
+      }
 
       if (attempt < MAX_ATTEMPTS_PER_MODEL) {
         await sleep(800 * attempt + Math.floor(Math.random() * 400));
@@ -165,7 +168,7 @@ async function callGemini(systemInstruction, userPrompt, timeoutMs = 20000) {
 class GeminiService {
   /**
    * Generates a polished campaign pitch, title, and milestone breakdown.
-   * 
+   *
    * @param {object} params
    * @param {string} params.notes - Rough bullet points / raw text from user
    * @param {string} params.category - Campaign category (Medical, Education, etc.)
@@ -174,7 +177,7 @@ class GeminiService {
    * @returns {Promise<object>}
    */
   static async generateCampaignStory({ notes, category = 'Community', target_amount = 5000, beneficiary = 'our community' }) {
-    
+
 const systemPrompt = `
 You are a senior philanthropic grant writer and crowdfunding storytelling expert for the HelpFund platform.
 
@@ -228,7 +231,7 @@ ${notes}
       source: 'fallback', // lets the UI tell the user this is template text, not real AI output
       suggested_title: `Support for ${category} Initiative: ${cleanNotes.substring(0, 45).replace(/\n/g, ' ')}...`,
       short_description: `Join us in supporting ${beneficiary} with urgent ${category.toLowerCase()} funding to achieve lasting community impact.`,
-      
+
 story_content: `The Challenge
 
 ${cleanNotes}
@@ -261,118 +264,322 @@ Your support can help ${beneficiary} by contributing toward the campaign goals. 
 
   /**
    * Analyzes campaign content for transparency, verifiability, and fraud risk indicators.
-   * 
+   *
    * @param {object} campaign
    * @returns {Promise<object>}
    */
-  static async analyzeCampaignTrust(campaign) {
-    const {
-      title = '',
-      category = 'Other',
-      short_description = '',
-      story_content = '',
-      target_amount = 1000,
-      deadline = ''
-    } = campaign;
 
-    const systemPrompt = `
-You are an expert fraud investigator and credibility auditor for crowdfunding campaigns at HelpFund.
-Analyze the provided campaign information for transparency, realistic budgeting, verifiable claims, and potential risk indicators.
-Return a valid JSON object matching this schema:
+static async analyzeCampaignTrust(campaign) {
+  const {
+    title = '',
+    category = 'Other',
+    short_description = '',
+    story_content = '',
+    target_amount = 1000,
+    deadline = ''
+  } = campaign;
+
+  const criteriaKeys = [
+    'beneficiaryTransparency',
+    'purposeClarity',
+    'budgetBreakdown',
+    'timelineMilestones',
+    'supportingInformation'
+  ];
+
+  const criteriaLabels = {
+    beneficiaryTransparency: 'Beneficiary Transparency',
+    purposeClarity: 'Purpose Clarity',
+    budgetBreakdown: 'Budget Breakdown',
+    timelineMilestones: 'Timeline & Milestones',
+    supportingInformation: 'Supporting Information'
+  };
+
+  const disclaimer =
+    'This AI-generated score evaluates the completeness and transparency of campaign information. It does not verify beneficiary identities, documents, claims, or campaign legitimacy.';
+
+  const fullText = [
+    title,
+    category,
+    short_description,
+    story_content
+  ].join(' ');
+
+  const systemPrompt = `
+You are HelpFund's campaign transparency assessment assistant.
+
+Evaluate ONLY information explicitly provided in the campaign.
+Never assume missing facts or claim that anything is verified.
+
+Score each of these five criteria independently from 0 to 20.
+
+SCORING:
+0 = Completely missing.
+5 = Very vague or minimal.
+10 = Some information, but important details are missing.
+15 = Clear and reasonably detailed.
+20 = Specific, detailed and well-structured.
+
+CRITERIA:
+
+1. beneficiaryTransparency:
+Is it clear who will directly benefit?
+Look for beneficiary identity or group, circumstances and context.
+
+2. purposeClarity:
+Is the problem and intended use of funds clearly explained?
+Look for a specific objective and why funding is needed.
+
+3. budgetBreakdown:
+Are funds explained through specific expenses?
+A total target amount alone is NOT an itemized budget.
+
+4. timelineMilestones:
+Are timeline and planned milestones explained?
+A deadline alone does NOT establish a detailed milestone plan.
+
+5. supportingInformation:
+Are useful supporting facts, quantities, locations, references or evidence descriptions provided?
+Assess only information mentioned in the text.
+Do not claim that documents are verified.
+
+Return ONLY valid JSON:
+
 {
-  "trust_score": <number from 0 to 100>,
-  "credibility_level": "High" | "Moderate" | "Review Needed",
-  "transparency_indicators": {
-    "budget_itemization": <boolean: whether expenses are itemized>,
-    "clear_beneficiary": <boolean: whether the recipient is explicitly identified>,
-    "realistic_timeline": <boolean: whether target and timeline are realistic>
+  "criteria": {
+    "beneficiaryTransparency": {
+      "score": 0,
+      "reason": "Explanation"
+    },
+    "purposeClarity": {
+      "score": 0,
+      "reason": "Explanation"
+    },
+    "budgetBreakdown": {
+      "score": 0,
+      "reason": "Explanation"
+    },
+    "timelineMilestones": {
+      "score": 0,
+      "reason": "Explanation"
+    },
+    "supportingInformation": {
+      "score": 0,
+      "reason": "Explanation"
+    }
   },
-  "strengths": ["list of positive credibility markers"],
-  "missing_or_vague_areas": ["list of areas needing clearer documentation"],
-  "actionable_recommendations": ["specific advice for the creator to boost legitimacy"],
-  "disclaimer": "This score is an automated AI-generated advisory assessment based on text transparency and verifiability indicators. It does not constitute legal or financial verification."
+  "strengths": ["Specific strengths"],
+  "missing_or_vague_areas": ["Missing details"],
+  "actionable_recommendations": ["Practical improvements"]
 }
+
+Every score must be a number from 0 to 20.
+Every reason must be a non-empty string.
+Do not calculate a total score.
 `.trim();
 
-    const userPrompt = `
-Title: ${title}
+  const userPrompt = `
+Campaign Title: ${title}
 Category: ${category}
 Target Amount: $${target_amount}
 Deadline: ${deadline}
-Summary: ${short_description}
-Story Content:
+
+Campaign Summary:
+${short_description}
+
+Campaign Story:
 ${story_content}
 `.trim();
 
-    const geminiResult = await callGemini(systemPrompt, userPrompt);
-    if (geminiResult && typeof geminiResult.trust_score === 'number' && geminiResult.credibility_level) {
-      return { ...geminiResult, source: 'gemini' };
-    }
+  const geminiResult = await callGemini(systemPrompt, userPrompt);
 
-    // Intelligent Semantic Fallback Auditor
-    let score = 70; // baseline
-    const strengths = [];
-    const missing = [];
-    const recommendations = [];
+  let criteria = null;
+  let strengths = [];
+  let missing = [];
+  let recommendations = [];
+  let source = 'gemini';
 
-    const fullText = `${title} ${short_description} ${story_content}`.toLowerCase();
+  const validGeminiCriteria =
+    geminiResult &&
+    geminiResult.criteria &&
+    criteriaKeys.every((key) => {
+      const item = geminiResult.criteria[key];
 
-    // Check 1: Budget itemization ($ signs, breakdown keywords)
-    const hasNumbers = /\$|\d+/.test(story_content);
-    const hasItemization = /cost|budget|expense|item|breakdown|fee|tuition|quote/i.test(story_content);
-    if (hasNumbers && hasItemization) {
-      score += 12;
-      strengths.push('Includes specific financial figures and cost breakdowns.');
-    } else {
-      score -= 10;
-      missing.push('Detailed, itemized budget breakdown is sparse.');
-      recommendations.push('Itemize how the requested funds will be split across specific expenses.');
-    }
+      return (
+        item &&
+        typeof item.score === 'number' &&
+        Number.isFinite(item.score) &&
+        item.score >= 0 &&
+        item.score <= 20 &&
+        typeof item.reason === 'string' &&
+        item.reason.trim().length > 0
+      );
+    });
 
-    // Check 2: Story length and depth
-    if (story_content.length > 250) {
-      score += 8;
-      strengths.push('Detailed campaign story providing meaningful context.');
-    } else {
-      score -= 8;
-      missing.push('Campaign story is relatively brief.');
-      recommendations.push('Add more background details on who you are and why this cause matters.');
-    }
+  if (validGeminiCriteria) {
+    criteria = {};
 
-    // Check 3: Beneficiary clarity
-    const hasBeneficiary = /i |my |our |we |student|patient|family|community|school|hospital/i.test(fullText);
-    if (hasBeneficiary) {
-      score += 6;
-      strengths.push('Identifies clear beneficiary and community beneficiaries.');
-    } else {
-      recommendations.push('Explicitly name who will directly receive and manage the funds.');
-    }
+    criteriaKeys.forEach((key) => {
+      criteria[key] = {
+        score: Math.round(geminiResult.criteria[key].score),
+        maxScore: 20,
+        reason: geminiResult.criteria[key].reason.trim()
+      };
+    });
 
-    // Clamp score between 10 and 98
-    const finalScore = Math.max(10, Math.min(98, score));
-    let credibilityLevel = 'Moderate';
-    if (finalScore >= 80) credibilityLevel = 'High';
-    else if (finalScore < 50) credibilityLevel = 'Review Needed';
+    strengths = Array.isArray(geminiResult.strengths)
+      ? geminiResult.strengths
+          .filter((item) => typeof item === 'string')
+          .slice(0, 5)
+      : [];
 
-    return {
-      source: 'fallback',
-      trust_score: finalScore,
-      credibility_level: credibilityLevel,
-      transparency_indicators: {
-        budget_itemization: hasNumbers && hasItemization,
-        clear_beneficiary: hasBeneficiary,
-        realistic_timeline: true
+    missing = Array.isArray(geminiResult.missing_or_vague_areas)
+      ? geminiResult.missing_or_vague_areas
+          .filter((item) => typeof item === 'string')
+          .slice(0, 5)
+      : [];
+
+    recommendations = Array.isArray(geminiResult.actionable_recommendations)
+      ? geminiResult.actionable_recommendations
+          .filter((item) => typeof item === 'string')
+          .slice(0, 5)
+      : [];
+
+  } else {
+    // Fallback assessment when Gemini is unavailable.
+    source = 'fallback';
+
+    const text = fullText.toLowerCase();
+    const story = story_content.toLowerCase();
+
+    const hasBeneficiary =
+      /\b(student|students|patient|patients|children|families|family|villagers|residents|community|school|hospital|farmers|workers|individuals|people)\b/i.test(text);
+
+    const hasSpecificBeneficiary =
+      hasBeneficiary &&
+      /\b(for|to support|helping|serving|provide)\b/i.test(text);
+
+    const hasPurpose =
+      story_content.trim().length >= 80 &&
+      /\b(to provide|to support|to fund|to build|to create|to purchase|to help|because|need|aim|purpose|will provide|will fund)\b/i.test(text);
+
+    const hasBudgetWords =
+      /\b(cost|budget|expenses|expense|fees|tuition|equipment|supplies|materials|transport|rent|medicine|itemized|breakdown)\b/i.test(story);
+
+    const amounts = story.match(/\$?\b\d+(?:,\d{3})*(?:\.\d+)?\b/g) || [];
+
+    const hasMultipleExpenses =
+      hasBudgetWords && amounts.length >= 2;
+
+    const hasTimelineWords =
+      /\b(phase|milestone|week|weeks|month|months|stage|timeline|completion|launch|deliver)\b/i.test(story);
+
+    const hasSupportingDetails =
+      amounts.length >= 2 &&
+      /\b(location|district|village|hospital|school|clinic|families|students|patients|units|people|meters|kits|equipment|report|reference|survey|quote|receipt|estimate)\b/i.test(text);
+
+    criteria = {
+      beneficiaryTransparency: {
+        score: hasSpecificBeneficiary ? 20 : hasBeneficiary ? 10 : 0,
+        maxScore: 20,
+        reason: hasSpecificBeneficiary
+          ? 'A beneficiary group and intended recipients are mentioned.'
+          : hasBeneficiary
+            ? 'A beneficiary group is mentioned, but more specific recipient details are needed.'
+            : 'The direct beneficiaries are not clearly identified.'
       },
-      strengths: strengths.length > 0 ? strengths : ['Basic campaign outline provided.'],
-      missing_or_vague_areas: missing.length > 0 ? missing : ['No critical red flags detected.'],
-      actionable_recommendations: recommendations.length > 0 ? recommendations : ['Consider posting regular milestone updates once funded.'],
-      disclaimer: 'This score is an automated AI-generated advisory assessment based on text transparency and verifiability indicators. It does not constitute legal or financial verification.'
+
+      purposeClarity: {
+        score: hasPurpose ? 20 : story_content.trim().length >= 40 ? 10 : 5,
+        maxScore: 20,
+        reason: hasPurpose
+          ? 'The campaign describes its purpose and funding objective.'
+          : 'A more specific explanation of the problem and intended use of funds is needed.'
+      },
+
+      budgetBreakdown: {
+        score: hasMultipleExpenses ? 20 : hasBudgetWords ? 10 : 0,
+        maxScore: 20,
+        reason: hasMultipleExpenses
+          ? 'Expense-related details and multiple numerical figures are present.'
+          : hasBudgetWords
+            ? 'Some expense information is present, but an itemized budget is needed.'
+            : 'The fundraising target alone does not explain how funds will be spent.'
+      },
+
+      timelineMilestones: {
+        score: hasTimelineWords && deadline ? 20 : deadline ? 10 : 0,
+        maxScore: 20,
+        reason: hasTimelineWords && deadline
+          ? 'A deadline and timeline-related details are mentioned.'
+          : deadline
+            ? 'A deadline is provided, but specific milestones are missing.'
+            : 'A clear timeline and completion deadline are needed.'
+      },
+
+      supportingInformation: {
+        score: hasSupportingDetails ? 20 : amounts.length > 0 ? 10 : 5,
+        maxScore: 20,
+        reason: hasSupportingDetails
+          ? 'The campaign includes contextual details and numerical information.'
+          : 'Additional factual details and supporting context would improve transparency.'
+      }
     };
+
+    strengths = Object.values(criteria)
+      .filter((item) => item.score >= 15)
+      .map((item) => item.reason);
+
+    missing = Object.entries(criteria)
+      .filter(([, item]) => item.score < 15)
+      .map(([key]) => `${criteriaLabels[key]} needs more detail.`);
+
+    recommendations = missing.map((item) =>
+      `Improve ${item.replace(' needs more detail.', '')} by adding specific information.`
+    );
+
+    if (strengths.length === 0) {
+      strengths.push('The campaign provides an initial description for assessment.');
+    }
   }
+
+  // Backend calculates the final score.
+  const trustScore = criteriaKeys.reduce(
+    (total, key) => total + criteria[key].score,
+    0
+  );
+
+  let credibilityLevel = 'Needs Improvement';
+
+  if (trustScore >= 80) credibilityLevel = 'Excellent';
+  else if (trustScore >= 60) credibilityLevel = 'Good';
+  else if (trustScore >= 40) credibilityLevel = 'Fair';
+
+  return {
+    trust_score: trustScore,
+    credibility_level: credibilityLevel,
+    rating: credibilityLevel,
+    criteria,
+
+    // Retained for compatibility with the existing frontend.
+    transparency_indicators: {
+      budget_itemization: criteria.budgetBreakdown.score >= 15,
+      clear_beneficiary: criteria.beneficiaryTransparency.score >= 15,
+      realistic_timeline: criteria.timelineMilestones.score >= 15
+    },
+
+    strengths,
+    missing_or_vague_areas: missing,
+    actionable_recommendations: recommendations,
+    disclaimer,
+    source
+  };
+}
+
 
   /**
    * Predicts tangible real-world impact for a specific donation amount.
-   * 
+   *
    * @param {object} params
    * @param {string} params.campaignTitle
    * @param {string} params.category
@@ -430,7 +637,7 @@ Donation Amount: $${amount}
 
   /**
    * Drafts an engaging progress update for backers from raw bullet points.
-   * 
+   *
    * @param {object} params
    * @param {string} params.campaignTitle
    * @param {string} params.rawNotes
