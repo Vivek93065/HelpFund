@@ -77,7 +77,7 @@ const Auth = {
 
     if (this.isLoggedIn()) {
       const user = this.getUser();
-      const displayName = user ? user.full_name.split(' ')[0] : 'User';
+      const displayName = user ? user.full_name : 'User';
       const roleBadge = user && user.role === 'admin'
         ? '<span class="badge badge-secondary" style="margin-left:4px;">Admin</span>'
         : '';
