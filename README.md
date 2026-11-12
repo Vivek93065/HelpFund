@@ -202,7 +202,7 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
 HelpFund includes a comprehensive automated test suite testing auth, campaigns, Gemini AI, and PayPal Sandbox payments offline:
 
 ```bash
-# Run all 75 automated tests:
+# Run all 80 automated tests:
 npm run test-all
 
 # Or run individual milestone test suites:
