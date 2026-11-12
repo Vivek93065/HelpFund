@@ -20,17 +20,16 @@
 ---
 
 ##  Executive Summary
-**HelpFund** is a production-quality, full-stack crowdfunding platform engineered to combine **Google Gemini Artificial Intelligence** with **PayPal's Developer Platform (Orders v2 Sandbox)**. 
+HelpFund is a full-stack, hackathon-ready crowdfunding platform that combines Google Gemini Artificial Intelligence with PayPal's Developer Platform (Orders v2 Sandbox). 
 
 Crowdfunding often suffers from two major friction points:
 1. **The Blank Page Problem for Creators**: Fundraisers struggle to craft persuasive, transparent stories with structured milestone budgets.
 2. **The Credibility & Trust Deficit for Donors**: Backers hesitate to donate when they cannot verify whether campaigns have realistic timelines, itemized budgets, or genuine community beneficiaries.
 
 HelpFund solves both:
-- **Creators** use the **Gemini AI Story Assistant** to convert rough notes into compelling grant-style pitches, accompanied by an AI-generated widescreen campaign visual.
+- **Creators** use the **Gemini AI Story Assistant** to convert rough notes into compelling grant-style pitches, accompanied by an AI-generated or curated campaign visual.
 - **Donors** see an automated **AI Credibility Audit (0–100 Trust Score)** evaluating budget clarity, beneficiary transparency, and timeline feasibility.
-- **Smart Impact Calculator**: Inside the PayPal checkout modal, Gemini predicts the exact real-world impact of the donor's chosen contribution (e.g. *"$50 covers 2 pediatric consultation sessions and emergency medication kits"*).
-- **Institutional Payment Security**: Donations are initiated and captured entirely server-side via the **PayPal Orders v2 API**, recorded in an atomic SQLite ledger with strict idempotency against duplicate captures.
+- **Server-Side PayPal Payment Verification:**: Donations are initiated and captured entirely server-side via the **PayPal Orders v2 API**, recorded in an atomic SQLite ledger with strict idempotency against duplicate captures.
 
 ---
 
@@ -98,20 +97,20 @@ flowchart TD
 
 ### 2. Google Gemini AI Capabilities
 - **AI Campaign Story Assistant**: Transforms rough notes into structured, empathetic proposals with section headings (*The Challenge*, *How Every Dollar Will Be Used*, *Immediate Impact*) and suggested funding milestones.
-- **AI Trust & Credibility Scorer**: Analyzes campaign text for budget itemization, beneficiary clarity, and timeline realism, generating a 0–100 Trust Score and actionable recommendations.
+- **AI Trust & Credibility Scorer**: Analyzes campaign text across five criteria — beneficiary transparency, purpose clarity, budget breakdown, timeline and milestones, and supporting information — generating a 0–100 advisory score with actionable recommendations.
 - **AI Smart Impact Calculator**: Dynamically predicts the real-world impact of any donation amount ($10, $25, $50, $100) inside the PayPal modal.
 - **AI Campaign Update Drafter**: Allows creators to input raw bullet points on project progress; Gemini crafts a polished donor announcement.
-- **Zero-Crash Semantic Fallback**: If the Gemini API is unreachable or offline, an intelligent built-in semantic fallback guarantees 100% platform availability.
+- **Built-in AI Fallback**: If the Gemini API is temporarily unavailable or returns an invalid response, a deterministic built-in assessment provides an alternative result for supported AI features.
 
 ### 3. Multi-Tier Resilient AI Image Generation
 - **Tier 1**: Cloudflare Workers AI (`@cf/black-forest-labs/flux-1-schnell`) when credentials are provided.
 - **Tier 2**: Google Imagen 3 (`imagen-3.0-generate-002`) using the configured `GEMINI_API_KEY`.
-- **Tier 3**: Zero-config serverless AI image generation via Pollinations.ai FLUX engine (free, instant, no key required).
-- **Tier 4**: High-definition curated category photography presets.
+- **Tier 3**: Pollinations.ai FLUX image generation endpoint as an additional image-generation fallback, subject to external service availability.
+- **Tier 4**: Curated category-based photography as a visual fallback when AI image generation is unavailable.
 
 ### 4. High-Performance Synchronous Database
 - Powered by `better-sqlite3` running in **Write-Ahead Logging (WAL) Mode** with **Foreign Keys ON**.
-- 100% prepared statements with parameterized SQL bindings for SQL injection immunity.
+- Prepared statements and parameterized SQL bindings are used throughout database operations to reduce SQL injection risks.
 
 ---
 
@@ -247,7 +246,7 @@ npm run test-donations   # 23 Tests: PayPal Orders v2, Idempotency, Ledger
 | Layer | Technologies Used |
 | :--- | :--- |
 | **Payments** | PayPal Developer Platform, Orders v2 REST API, PayPal Smart Buttons SDK |
-| **Artificial Intelligence** | Google Gemini (2.5/3.5 Flash), Google Imagen 3, Cloudflare Workers AI FLUX |
+| **Artificial Intelligence** | Google Gemini (3.5 Flash Lite with fallback models), Cloudflare Workers AI FLUX, Pollinations.ai FLUX |
 | **Backend Runtime** | Node.js 22 LTS, Express 4.21, Helmet, CORS, Multer |
 | **Database** | SQLite via `better-sqlite3` (WAL Mode, ACID Transactions, Foreign Keys) |
 | **Frontend** | Vanilla ES6+ JavaScript, CSS3 Design Tokens, Semantic HTML5 |
