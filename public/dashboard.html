@@ -323,7 +323,15 @@
 
       document.getElementById('welcome-heading').textContent = `Welcome back, ${user.full_name}!`;
       await Promise.all([loadMyCampaigns(), loadMyDonations()]);
+      applyDashHash();
+      window.addEventListener('hashchange', applyDashHash);
     });
+
+    // Lets the navbar menu deep-link: /dashboard.html#donations or #campaigns
+    function applyDashHash() {
+      if (location.hash === '#donations') switchDashTab('donations');
+      else if (location.hash === '#campaigns') switchDashTab('campaigns');
+    }
 
     function switchDashTab(tab) {
       const campBtn = document.getElementById('tab-campaigns-btn');

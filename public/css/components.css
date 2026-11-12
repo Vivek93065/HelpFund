@@ -293,3 +293,135 @@
 .sandbox-guide-pill strong {
   color: var(--color-text-main);
 }
+
+/* ===== Signed-in user dropdown (navbar) ===== */
+.user-menu { position: relative; }
+
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-main);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.user-menu-trigger:hover,
+.user-menu-trigger[aria-expanded="true"] {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+.user-menu-trigger:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.user-menu-chevron { transition: transform var(--transition-fast); color: var(--color-text-muted); }
+.user-menu-trigger[aria-expanded="true"] .user-menu-chevron { transform: rotate(180deg); }
+
+.user-avatar {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+.user-avatar-lg { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+
+.user-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.6rem);
+  width: 270px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  animation: userMenuIn 140ms ease-out;
+}
+.user-menu-panel[hidden] { display: none; }
+@keyframes userMenuIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.user-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--color-surface-hover);
+  border-bottom: 1px solid var(--color-border);
+}
+.user-menu-who { display: flex; flex-direction: column; min-width: 0; gap: 0.1rem; }
+.user-menu-who strong {
+  font-size: 0.95rem; color: var(--color-text-main);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-menu-email {
+  font-size: 0.78rem; color: var(--color-text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-role-pill {
+  align-self: flex-start;
+  margin-top: 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.user-menu-section { padding: 0.4rem; }
+.user-menu-section + .user-menu-section { border-top: 1px solid var(--color-border); }
+
+.user-menu-panel a,
+.user-menu-panel .user-menu-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text-main);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.user-menu-panel a svg,
+.user-menu-panel .user-menu-logout svg { color: var(--color-text-muted); flex-shrink: 0; }
+.user-menu-panel a:hover,
+.user-menu-panel a:focus-visible,
+.user-menu-panel .user-menu-logout:hover,
+.user-menu-panel .user-menu-logout:focus-visible {
+  background: var(--color-surface-hover);
+  outline: none;
+}
+.user-menu-panel a:hover svg { color: var(--color-primary); }
+.user-menu-panel .user-menu-logout { color: #dc2626; }
+.user-menu-panel .user-menu-logout svg { color: #dc2626; }
+.user-menu-panel .user-menu-logout:hover { background: rgba(220, 38, 38, 0.08); }
+
+@media (max-width: 640px) {
+  .nav-cta { display: none; }
+  .user-menu-name { display: none; }
+  .user-menu-trigger { padding-right: 0.5rem; }
+  .user-menu-panel { width: min(270px, calc(100vw - 2rem)); }
+}

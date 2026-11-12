@@ -125,7 +125,6 @@ Visit **[https://helpfund.onrender.com](https://helpfund.onrender.com)**.
 ### 2. Judge One-Click Demo Credentials
 On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick-fill buttons:
 - **Campaign Creator**: `maya.lin@helpfund.org` / `DemoPassword123!`
-- **Platform Admin**: `admin@helpfund.org` / `DemoPassword123!`
 
 ### 3. Testing a PayPal Sandbox Donation
 1. Go to any campaign on the [Explore page](https://helpfund.onrender.com/explore.html).
