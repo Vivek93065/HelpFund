@@ -13,13 +13,13 @@
 
 ---
 
-## 🌟 Live Demo & Links
+##  Live Demo & Links
 - **Hosted Platform URL**: [https://helpfund.onrender.com](https://helpfund.onrender.com)
 - **GitHub Repository**: [https://github.com/Vivek93065/HelpFund](https://github.com/Vivek93065/HelpFund)
 
 ---
 
-## 📌 Executive Summary
+##  Executive Summary
 **HelpFund** is a production-quality, full-stack crowdfunding platform engineered to combine **Google Gemini Artificial Intelligence** with **PayPal's Developer Platform (Orders v2 Sandbox)**. 
 
 Crowdfunding often suffers from two major friction points:
@@ -34,7 +34,7 @@ HelpFund solves both:
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```mermaid
 flowchart TD
@@ -88,7 +88,7 @@ flowchart TD
 
 ---
 
-## ✨ Key Features & Technical Highlights
+##  Key Features & Technical Highlights
 
 ### 1. PayPal Developer Platform Integration (Sandbox)
 - **Orders v2 REST API**: Communicates directly with `api-m.sandbox.paypal.com` using OAuth 2.0 Client Credentials with cached bearer tokens.
@@ -115,7 +115,7 @@ flowchart TD
 
 ---
 
-## 🧪 Quick Test Guide for Hackathon Judges
+##  Quick Test Guide for Hackathon Judges
 
 To test HelpFund immediately:
 
@@ -128,7 +128,7 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
 
 ### 3. Testing a PayPal Sandbox Donation
 1. Go to any campaign on the [Explore page](https://helpfund.onrender.com/explore.html).
-2. Click **"❤️ Donate to this Cause"**.
+2. Click **"Donate to this Cause"**.
 3. Select an amount ($10, $25, $50, $100) or enter a custom value — observe the **Gemini AI Impact Prediction** calculate live.
 4. Click the yellow **PayPal** button.
 5. In the PayPal sandbox popup, log in with any personal PayPal Sandbox buyer account or test credentials:
@@ -138,7 +138,7 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
 
 ---
 
-## 💻 Local Installation & Setup
+##  Local Installation & Setup
 
 ### Prerequisites
 - Node.js 20.x or 22.x
@@ -197,7 +197,7 @@ On the [Sign In page](https://helpfund.onrender.com/login.html), click the quick
 
 ---
 
-## 🧪 Automated Test Suite (80 Tests Passing)
+##  Automated Test Suite (80 Tests Passing)
 
 HelpFund includes a comprehensive automated test suite testing auth, campaigns, Gemini AI, and PayPal Sandbox payments offline:
 
@@ -214,7 +214,7 @@ npm run test-donations   # 23 Tests: PayPal Orders v2, Idempotency, Ledger
 
 ---
 
-## 📡 REST API Reference
+##  REST API Reference
 
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
@@ -242,7 +242,7 @@ npm run test-donations   # 23 Tests: PayPal Orders v2, Idempotency, Ledger
 
 ---
 
-## 🛠️ Technology Stack Breakdown
+##  Technology Stack Breakdown
 
 | Layer | Technologies Used |
 | :--- | :--- |
@@ -256,5 +256,5 @@ npm run test-donations   # 23 Tests: PayPal Orders v2, Idempotency, Ledger
 
 ---
 
-## 📄 License
+##  License
 This project is open-source and licensed under the [MIT License](LICENSE).
